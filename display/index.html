@@ -3,241 +3,240 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bulletin Board Display</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <title>Bulletin Board</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    html, body { width:100%; height:100%; overflow:hidden; background:#1e2a4a; }
-
-    /* ── BACKGROUND GRADIENT ── */
+    html, body { width:100%; height:100%; overflow:hidden; }
     body {
-      background: linear-gradient(135deg, #eef2ff 0%, #f0f4ff 40%, #e8f0ff 100%);
-      font-family: 'DM Sans', sans-serif;
+      font-family:'DM Sans',sans-serif;
+      background: linear-gradient(135deg,#eef2ff 0%,#f0f4ff 45%,#e8f0fe 100%);
     }
 
-    /* ── SLIDESHOW CONTAINER ── */
+    /* ── SLIDESHOW ── */
     #show { width:100vw; height:100vh; position:relative; overflow:hidden; }
 
-    /* ── INDIVIDUAL SLIDE ── */
     .slide {
       position:absolute; inset:0;
       display:flex; align-items:center; justify-content:center;
-      opacity:0; transition:opacity .8s ease; pointer-events:none;
+      opacity:0; transition:opacity .9s ease; pointer-events:none;
     }
     .slide.active { opacity:1; pointer-events:auto; }
 
-    /* ── TEXT SLIDE ── */
+    /* ── TEXT ── */
     .slide-text {
-      width:80%; max-width:960px; text-align:center;
-      padding:54px 64px;
-      background: rgba(255,255,255,0.84);
-      backdrop-filter: blur(24px);
-      border-radius:28px;
-      box-shadow: 0 16px 56px rgba(91,127,255,.14), 0 2px 8px rgba(0,0,0,.05);
-      border:1px solid rgba(255,255,255,.92);
-      animation: floatIn .7s ease;
+      width:82%; max-width:980px; text-align:center;
+      padding:56px 68px;
+      background:rgba(255,255,255,.86);
+      backdrop-filter:blur(28px);
+      border-radius:30px;
+      box-shadow:0 20px 64px rgba(91,127,255,.15), 0 2px 10px rgba(0,0,0,.05);
+      border:1px solid rgba(255,255,255,.95);
+      animation:floatUp .65s ease;
     }
-    @keyframes floatIn { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
-
-    .cat-badge {
+    @keyframes floatUp { from{opacity:0;transform:translateY(26px)} to{opacity:1;transform:translateY(0)} }
+    .cat-pill {
       display:inline-block; font-size:12px; font-weight:700;
-      letter-spacing:.12em; text-transform:uppercase;
-      color:#5b7fff; background:#dce5ff; padding:5px 18px;
-      border-radius:99px; margin-bottom:22px;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:#5b7fff; background:#dce5ff;
+      padding:6px 20px; border-radius:99px; margin-bottom:24px;
     }
     .slide-title {
       font-family:'Playfair Display',serif;
-      font-size:clamp(30px,5vw,58px); color:#1e2a4a; line-height:1.2; margin-bottom:18px;
+      font-size:clamp(28px,5.5vw,62px);
+      color:#1e2a4a; line-height:1.18; margin-bottom:20px;
     }
-    .slide-content { font-size:clamp(16px,2.2vw,26px); color:#4a5568; line-height:1.65; font-weight:300; }
-
-    /* ── IMAGE SLIDE ── */
-    .slide-image-wrap {
-      width:100%; height:100%; position:relative; display:flex; align-items:center; justify-content:center;
-    }
-    .slide-image-wrap.fullscreen img { width:100%; height:100%; object-fit:cover; }
-    .slide-image-wrap:not(.fullscreen) img {
-      max-width:88vw; max-height:88vh; border-radius:20px;
-      box-shadow:0 20px 64px rgba(0,0,0,.18); object-fit:contain;
-    }
-    .img-caption {
-      position:absolute; bottom:32px; left:50%; transform:translateX(-50%);
-      background:rgba(30,42,74,.72); backdrop-filter:blur(12px);
-      color:#fff; padding:10px 28px; border-radius:99px;
-      font-size:clamp(13px,1.4vw,16px); font-weight:500;
-      white-space:nowrap; max-width:80vw; overflow:hidden; text-overflow:ellipsis;
-    }
-    .img-cat {
-      position:absolute; top:28px; left:50%; transform:translateX(-50%);
-      background:rgba(91,127,255,.85); backdrop-filter:blur(8px);
-      color:#fff; padding:6px 20px; border-radius:99px; font-size:12px; font-weight:700;
-      letter-spacing:.1em; text-transform:uppercase;
+    .slide-body {
+      font-size:clamp(15px,2.4vw,28px);
+      color:#4a5568; line-height:1.68; font-weight:300;
     }
 
-    /* ── VIDEO SLIDE ── */
-    .slide-video-wrap { width:100%; height:100%; }
-    .slide-video-wrap.windowed {
+    /* ── IMAGE ── */
+    .img-wrap {
+      width:100%; height:100%; position:relative;
       display:flex; align-items:center; justify-content:center;
     }
-    .slide-video-wrap.windowed video {
-      max-width:92vw; max-height:92vh; border-radius:16px;
-      box-shadow:0 20px 64px rgba(0,0,0,.22);
+    .img-wrap.fs img { width:100%; height:100%; object-fit:cover; }
+    .img-wrap:not(.fs) img {
+      max-width:90vw; max-height:90vh; object-fit:contain;
+      border-radius:22px;
+      box-shadow:0 24px 72px rgba(0,0,0,.20);
     }
-    .slide-video-wrap.fullscreen video { width:100%; height:100%; object-fit:cover; }
+    .img-cat {
+      position:absolute; top:30px; left:50%; transform:translateX(-50%);
+      background:rgba(91,127,255,.88); backdrop-filter:blur(10px);
+      color:#fff; padding:7px 22px; border-radius:99px;
+      font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    }
+    .img-caption {
+      position:absolute; bottom:34px; left:50%; transform:translateX(-50%);
+      background:rgba(30,42,74,.75); backdrop-filter:blur(14px);
+      color:#fff; padding:11px 30px; border-radius:99px;
+      font-size:clamp(13px,1.5vw,17px); font-weight:500;
+      white-space:nowrap; max-width:84vw; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    /* ── VIDEO ── */
+    .vid-wrap { width:100%; height:100%; }
+    .vid-wrap.windowed {
+      display:flex; align-items:center; justify-content:center;
+    }
+    .vid-wrap.windowed video {
+      max-width:92vw; max-height:92vh; border-radius:18px;
+      box-shadow:0 24px 72px rgba(0,0,0,.24);
+    }
+    .vid-wrap.fs video { width:100%; height:100%; object-fit:cover; }
 
     /* ── PROGRESS BAR ── */
-    #progress-wrap {
-      position:fixed; bottom:0; left:0; right:0; height:3px;
-      background:rgba(255,255,255,.2); z-index:10;
+    #prog-wrap {
+      position:fixed; bottom:0; left:0; right:0; height:4px;
+      background:rgba(91,127,255,.12); z-index:10;
     }
-    #progress-bar {
-      height:100%; background:linear-gradient(90deg,#5b7fff,#a78bfa);
-      width:0%; transition:width linear; border-radius:0 2px 0 0;
+    #prog-bar {
+      height:100%;
+      background:linear-gradient(90deg,#5b7fff,#a78bfa,#5b7fff);
+      background-size:200% 100%;
+      animation:shimmer 2s linear infinite;
+      width:0%; border-radius:0 2px 0 0;
     }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── SLIDE COUNTER ── */
+    /* ── COUNTER ── */
     #counter {
-      position:fixed; bottom:14px; right:20px;
-      font-size:12px; color:rgba(30,42,74,.45); font-weight:500; z-index:10; letter-spacing:.05em;
+      position:fixed; bottom:12px; right:18px;
+      font-size:11px; color:rgba(30,42,74,.38); font-weight:600;
+      z-index:11; letter-spacing:.06em;
     }
 
     /* ── LOADING ── */
     #loader {
-      position:fixed; inset:0; background:var(--bg,#eef2ff);
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:999;
+      position:fixed; inset:0;
+      background:linear-gradient(135deg,#eef2ff,#f0f4ff);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+      z-index:999;
     }
-    .loader-icon { font-size:40px; animation:pulse 1.2s infinite; }
-    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
-    .loader-text { font-size:14px; color:#7a87a8; }
+    .ld-icon { font-size:44px; animation:pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.12);opacity:.8} }
+    .ld-text { font-size:14px; color:#7a87a8; letter-spacing:.04em; }
   </style>
 </head>
 <body>
 
 <div id="loader">
-  <div class="loader-icon">📋</div>
-  <div class="loader-text">Loading bulletin board...</div>
+  <div class="ld-icon">📋</div>
+  <div class="ld-text">Loading bulletin board…</div>
 </div>
 
 <div id="show"></div>
-
-<div id="progress-wrap"><div id="progress-bar"></div></div>
+<div id="prog-wrap"><div id="prog-bar"></div></div>
 <div id="counter"></div>
 
 <script type="module">
-// ── FIREBASE CONFIG — paste yours here ───────────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
 const firebaseConfig = {
-  apiKey: "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
-  authDomain: "digitalbulletinboard-54f06.firebaseapp.com",
-  projectId: "digitalbulletinboard-54f06",
-  storageBucket: "digitalbulletinboard-54f06.firebasestorage.app",
+  apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
+  authDomain:        "digitalbulletinboard-54f06.firebaseapp.com",
+  databaseURL:       "https://digitalbulletinboard-54f06-default-rtdb.firebaseio.com",
+  projectId:         "digitalbulletinboard-54f06",
+  storageBucket:     "digitalbulletinboard-54f06.firebasestorage.app",
   messagingSenderId: "987342604782",
-  appId: "1:987342604782:web:90f8a7e895e8f8a2b026ff"
+  appId:             "1:987342604782:web:90f8a7e895e8f8a2b026ff"
 };
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 // ─────────────────────────────────────────────────────────────────────────────
 
-let slides   = [];
-let current  = 0;
-let timer    = null;
-let progTimer = null;
+let slides = [], cur = 0, slideTimer = null;
 
-// ── FETCH POSTS REALTIME ──────────────────────────────────────────────────────
-onValue(ref(db, 'posts'), snap => {
+// Listen in real-time — rebuilds slides whenever DB changes
+onValue(ref(db,'posts'), snap => {
   slides = [];
   if (snap.exists()) snap.forEach(c => slides.push(c.val()));
   document.getElementById('loader').style.display = 'none';
-  buildSlides();
-  startShow();
+  buildDOM();
+  restart();
 });
 
-// ── BUILD SLIDE DOM ───────────────────────────────────────────────────────────
-function buildSlides() {
+function buildDOM() {
   const show = document.getElementById('show');
   show.innerHTML = '';
-
-  if (slides.length === 0) {
-    show.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:20px;color:#7a87a8;">No posts yet. Add some from the Admin Panel.</div>`;
+  if (!slides.length) {
+    show.innerHTML = `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:18px;color:#7a87a8">No posts yet. Add some from the Admin Panel.</div>`;
     return;
   }
-
   slides.forEach((item, i) => {
     const slide = document.createElement('div');
-    slide.className = 'slide';
-    slide.id = 'slide-' + i;
+    slide.className = 'slide'; slide.id = 'sl-'+i;
 
     if (item.type === 'text') {
       slide.innerHTML = `
         <div class="slide-text">
-          ${item.category ? `<div class="cat-badge">${item.category}</div>` : ''}
-          <div class="slide-title">${item.title}</div>
-          ${item.content ? `<div class="slide-content">${item.content}</div>` : ''}
+          ${item.category?`<div class="cat-pill">${safe(item.category)}</div>`:''}
+          <div class="slide-title">${safe(item.title)}</div>
+          ${item.content?`<div class="slide-body">${safe(item.content)}</div>`:''}
         </div>`;
-    }
-
-    else if (item.type === 'image') {
-      const fs = item.fullscreen ? 'fullscreen' : '';
+    } else if (item.type === 'image') {
+      const fsClass = item.fullscreen ? 'fs' : '';
       slide.innerHTML = `
-        <div class="slide-image-wrap ${fs}">
-          <img src="${item.imageUrl || item.url}" alt="${item.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><text y=%22100%22 font-size=%2260%22>🖼️</text></svg>'">
-          ${item.category ? `<div class="img-cat">${item.category}</div>` : ''}
-          ${item.title    ? `<div class="img-caption">${item.title}</div>` : ''}
+        <div class="img-wrap ${fsClass}">
+          <img src="${safe(item.imageUrl||item.url)}" alt="${safe(item.title)}"
+               onerror="this.style.display='none'">
+          ${item.category?`<div class="img-cat">${safe(item.category)}</div>`:''}
+          ${item.title   ?`<div class="img-caption">${safe(item.title)}</div>`:''}
         </div>`;
-    }
-
-    else if (item.type === 'video') {
-      const cls = item.fullscreen ? 'fullscreen' : 'windowed';
+    } else if (item.type === 'video') {
+      const cls = item.fullscreen ? 'fs' : 'windowed';
       slide.innerHTML = `
-        <div class="slide-video-wrap ${cls}">
-          <video autoplay muted playsinline loop>
-            <source src="${item.url}" type="video/mp4">
+        <div class="vid-wrap ${cls}">
+          <video autoplay muted playsinline loop preload="auto">
+            <source src="${safe(item.url)}" type="video/mp4">
           </video>
         </div>`;
     }
-
     show.appendChild(slide);
   });
 }
 
-// ── SLIDESHOW LOGIC ───────────────────────────────────────────────────────────
-function startShow() {
-  if (slides.length === 0) return;
-  clearTimeout(timer);
-  showSlide(0);
+function restart() {
+  clearTimeout(slideTimer);
+  if (!slides.length) return;
+  cur = 0; show(0);
 }
 
-function showSlide(idx) {
-  if (slides.length === 0) return;
-  current = ((idx % slides.length) + slides.length) % slides.length;
-
-  // Remove active from all
+function show(idx) {
+  if (!slides.length) return;
+  cur = ((idx % slides.length) + slides.length) % slides.length;
   document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-
-  const el = document.getElementById('slide-' + current);
+  const el = document.getElementById('sl-'+cur);
   if (!el) return;
   el.classList.add('active');
 
-  // Auto-play video
+  // play video
   const vid = el.querySelector('video');
   if (vid) vid.play().catch(()=>{});
 
-  // Counter
-  document.getElementById('counter').textContent = `${current+1} / ${slides.length}`;
+  // counter
+  document.getElementById('counter').textContent = `${cur+1} / ${slides.length}`;
 
-  // Progress bar
-  const dur = slides[current]?.duration || 5000;
-  const bar = document.getElementById('progress-bar');
-  bar.style.transition = 'none'; bar.style.width = '0%';
-  setTimeout(() => { bar.style.transition = `width ${dur}ms linear`; bar.style.width = '100%'; }, 30);
+  // progress bar animation
+  const dur = slides[cur]?.duration || 5000;
+  const bar = document.getElementById('prog-bar');
+  bar.style.transition = 'none'; bar.style.width='0%';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bar.style.transition = `width ${dur}ms linear`;
+    bar.style.width = '100%';
+  }));
 
-  // Next slide timer
-  clearTimeout(timer);
-  timer = setTimeout(() => showSlide(current + 1), dur);
+  clearTimeout(slideTimer);
+  slideTimer = setTimeout(()=>show(cur+1), dur);
 }
+
+// Safe text
+function safe(s){ const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
 </script>
 </body>
 </html>
