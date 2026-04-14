@@ -84,6 +84,13 @@
     .btn:hover  { background: var(--pd); }
     .btn:active { transform: scale(.98); }
     .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .help-toggle { text-align:center; margin-top:16px; font-size:12px; color:var(--muted); cursor:pointer; }
+    .help-toggle:hover { color:var(--primary); text-decoration:underline; }
+    .help-box { display:none; margin-top:12px; background:#fffbeb; border:1px solid #fde68a; border-radius:12px; padding:14px 16px; font-size:12px; color:#78350f; line-height:1.75; }
+    .help-box.open { display:block; }
+    .help-box b { display:block; margin-bottom:6px; font-size:13px; }
+    .help-box ol { padding-left:16px; }
+    .help-box li { margin-bottom:3px; }
   </style>
 </head>
 <body>
@@ -128,6 +135,20 @@
     <div class="msg" id="r-msg"></div>
     <button class="btn" id="r-btn" onclick="doRegister()">Submit Request</button>
   </div>
+
+  <div class="help-toggle" onclick="document.getElementById('hbox').classList.toggle('open')">
+    ⚠️ Can't sign in? Click here for help
+  </div>
+  <div class="help-box" id="hbox">
+    <b>Common reasons login gets stuck on "Signing in..." or "Checking access...":</b>
+    <ol>
+      <li><b>Realtime Database not created</b> — Go to Firebase Console → Build → Realtime Database → Create database</li>
+      <li><b>Wrong or missing databaseURL</b> — Should be: <code>https://digitalbulletinboard-54f06-default-rtdb.asia-southeast1.firebasedatabase.app</code></li>
+      <li><b>Authentication not enabled</b> — Firebase Console → Authentication → Enable Email/Password</li>
+      <li><b>First admin not approved</b> — After registering, go to Realtime Database → users → your UID → set status to <code>"approved"</code></li>
+      <li><b>Database rules too strict</b> — Paste the rules from the README into Realtime Database → Rules tab</li>
+    </ol>
+  </div>
 </div>
 
 <script type="module">
@@ -140,7 +161,7 @@ import { getDatabase, ref, set, get }
 const firebaseConfig = {
   apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
   authDomain:        "digitalbulletinboard-54f06.firebaseapp.com",
-  databaseURL:       "https://digitalbulletinboard-54f06-default-rtdb.firebaseio.com",
+  databaseURL:       "https://digitalbulletinboard-54f06-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:         "digitalbulletinboard-54f06",
   storageBucket:     "digitalbulletinboard-54f06.firebasestorage.app",
   messagingSenderId: "987342604782",
@@ -167,22 +188,76 @@ window.doLogin = async function() {
   const btn   = document.getElementById('l-btn');
   msg.className = 'msg'; msg.textContent = '';
   if (!email || !pass) { msg.className='msg err'; msg.textContent='Enter your email and password.'; return; }
+
   btn.disabled = true; btn.textContent = 'Signing in...';
+
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    const uid  = cred.user.uid;
-    const snap = await get(ref(db, 'users/' + uid));
-    if (!snap.exists()) {
-      await signOut(auth);
-      msg.className='msg err'; msg.textContent='No user record found. Contact admin.';
+    // Step 1 — Firebase Auth
+    let cred;
+    try {
+      cred = await signInWithEmailAndPassword(auth, email, pass);
+    } catch(authErr) {
+      msg.className='msg err'; msg.textContent = errMsg(authErr.code);
       btn.disabled=false; btn.textContent='Sign In'; return;
     }
+
+    const uid = cred.user.uid;
+    btn.textContent = 'Checking access...';
+
+    // Step 2 — DB lookup with 8-second timeout
+    let snap;
+    try {
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('DB_TIMEOUT')), 8000)
+      );
+      snap = await Promise.race([get(ref(db, 'users/'+uid)), timeout]);
+    } catch(dbErr) {
+      await signOut(auth);
+      btn.disabled=false; btn.textContent='Sign In';
+      if (dbErr.message === 'DB_TIMEOUT') {
+        msg.className='msg err';
+        msg.textContent='⚠️ Database not reachable. Make sure Realtime Database is created in your Firebase console and the databaseURL is correct.';
+      } else {
+        msg.className='msg err';
+        msg.textContent='Database error: ' + dbErr.message;
+      }
+      return;
+    }
+
+    // Step 3 — Check approval status
+    if (!snap.exists()) {
+      await signOut(auth);
+      msg.className='msg warn';
+      msg.textContent='⚠️ No access record found. If you just registered, wait for admin approval. If you are the first admin, set your status to "approved" manually in the Firebase Realtime Database console.';
+      btn.disabled=false; btn.textContent='Sign In'; return;
+    }
+
     const status = snap.val().status;
-    if (status === 'pending')  { await signOut(auth); msg.className='msg warn'; msg.textContent='⏳ Your request is pending admin approval.'; btn.disabled=false; btn.textContent='Sign In'; return; }
-    if (status === 'rejected') { await signOut(auth); msg.className='msg err';  msg.textContent='❌ Your access was rejected. Contact admin.'; btn.disabled=false; btn.textContent='Sign In'; return; }
-    if (status === 'approved') { window.location.href = 'admin.html'; return; }
+    if (status === 'pending') {
+      await signOut(auth);
+      msg.className='msg warn';
+      msg.textContent='⏳ Your request is pending admin approval.';
+      btn.disabled=false; btn.textContent='Sign In'; return;
+    }
+    if (status === 'rejected') {
+      await signOut(auth);
+      msg.className='msg err';
+      msg.textContent='❌ Your access was rejected. Contact the administrator.';
+      btn.disabled=false; btn.textContent='Sign In'; return;
+    }
+    if (status === 'approved') {
+      window.location.href = 'admin.html'; return;
+    }
+
+    // Unknown status
+    await signOut(auth);
+    msg.className='msg err';
+    msg.textContent='Unknown account status: "'+status+'". Contact admin.';
+    btn.disabled=false; btn.textContent='Sign In';
+
   } catch(e) {
-    msg.className='msg err'; msg.textContent = errMsg(e.code);
+    try { await signOut(auth); } catch(_) {}
+    msg.className='msg err'; msg.textContent = errMsg(e.code) || e.message;
     btn.disabled=false; btn.textContent='Sign In';
   }
 };
