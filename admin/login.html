@@ -8,80 +8,82 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:        #eef2ff;
-      --card:      #ffffff;
-      --primary:   #5b7fff;
-      --pl:        #dce5ff;
-      --pd:        #3a5ce4;
-      --text:      #1e2a4a;
-      --muted:     #7a87a8;
-      --border:    #e2e8f8;
-      --ok:        #22c55e;
-      --err:       #ef4444;
-      --warn:      #f59e0b;
-      --r:         14px;
+      --bg: #eef2ff; --card: #ffffff; --primary: #5b7fff; --pl: #dce5ff;
+      --pd: #3a5ce4; --text: #1e2a4a; --muted: #7a87a8; --border: #e2e8f8;
+      --ok: #22c55e; --err: #ef4444; --warn: #f59e0b; --r: 14px;
     }
     body {
       font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      min-height: 100vh;
+      background: var(--bg); min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
       background-image:
-        radial-gradient(circle at 15% 25%, rgba(91,127,255,.10) 0%, transparent 45%),
-        radial-gradient(circle at 85% 75%, rgba(147,112,219,.08) 0%, transparent 45%);
+        radial-gradient(circle at 15% 25%, rgba(91,127,255,.12) 0%, transparent 50%),
+        radial-gradient(circle at 85% 75%, rgba(147,112,219,.10) 0%, transparent 50%);
     }
     .card {
-      width: 100%; max-width: 420px;
-      background: var(--card);
-      border-radius: 24px;
-      padding: 40px 36px 36px;
-      box-shadow: 0 12px 48px rgba(91,127,255,.14);
+      width: 100%; max-width: 430px;
+      background: var(--card); border-radius: 24px;
+      padding: 44px 38px 38px;
+      box-shadow: 0 16px 56px rgba(91,127,255,.16);
       border: 1px solid var(--border);
-      animation: up .45s ease;
+      animation: up .4s ease;
     }
-    @keyframes up { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-    .logo-wrap { text-align: center; margin-bottom: 26px; }
+    @keyframes up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .logo-wrap { text-align: center; margin-bottom: 28px; }
     .logo-icon {
-      font-size: 32px;
-      background: var(--pl);
-      width: 64px; height: 64px;
-      display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 18px; margin-bottom: 12px;
+      font-size: 34px; background: var(--pl);
+      width: 68px; height: 68px; display: inline-flex;
+      align-items: center; justify-content: center;
+      border-radius: 20px; margin-bottom: 14px;
     }
-    .logo-title { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--text); }
-    .logo-sub   { font-size: 13px; color: var(--muted); margin-top: 3px; }
-    .tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 22px; }
+    .logo-title { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text); }
+    .logo-sub   { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .tabs {
+      display: flex; background: var(--bg); border-radius: 12px;
+      padding: 4px; gap: 4px; margin-bottom: 24px;
+    }
     .tab {
-      flex:1; padding: 9px; border: none; background: transparent;
-      font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500;
-      color: var(--muted); cursor:pointer; border-radius:8px; transition:.18s;
+      flex: 1; padding: 10px; border: none; background: transparent;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer; border-radius: 9px; transition: .18s;
     }
-    .tab.on { background: var(--card); color: var(--primary); box-shadow: 0 2px 8px rgba(91,127,255,.15); }
+    .tab.on { background: var(--card); color: var(--primary); box-shadow: 0 2px 10px rgba(91,127,255,.16); }
     .form { display: none; }
     .form.on { display: block; }
-    .field { margin-bottom: 15px; }
-    .field label { display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px; }
-    .field input, .field textarea, .field select {
-      width:100%; padding:11px 13px;
-      border:1.5px solid var(--border); border-radius:var(--r);
-      font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text);
-      background:#fafbff; outline:none; transition:.18s;
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: .07em; margin-bottom: 6px;
     }
-    .field textarea { min-height:76px; resize:vertical; }
+    .field input, .field textarea {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: var(--r);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+      background: #fafbff; outline: none; transition: .18s;
+    }
+    .field textarea { min-height: 80px; resize: vertical; }
     .field input:focus, .field textarea:focus {
-      border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,127,255,.11); background:#fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(91,127,255,.12); background: #fff;
     }
-    .msg { min-height:20px; font-size:13px; text-align:center; margin-bottom:6px; border-radius:8px; padding:4px 0; }
-    .msg.ok   { color:var(--ok); }
-    .msg.err  { color:var(--err); }
-    .msg.warn { color:var(--warn); }
+    .msg {
+      min-height: 22px; font-size: 13px; text-align: center;
+      margin-bottom: 8px; padding: 4px 0; border-radius: 8px;
+    }
+    .msg.ok   { color: var(--ok); }
+    .msg.err  { color: var(--err); }
+    .msg.warn { color: var(--warn); }
     .btn {
-      width:100%; padding:13px; background:var(--primary); color:#fff;
-      border:none; border-radius:var(--r); font-family:'DM Sans',sans-serif;
-      font-size:15px; font-weight:600; cursor:pointer; transition:.18s; margin-top:4px;
+      width: 100%; padding: 14px;
+      background: var(--primary); color: #fff; border: none;
+      border-radius: var(--r); font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: .18s; margin-top: 4px; letter-spacing: .02em;
     }
-    .btn:hover { background:var(--pd); }
-    .btn:active { transform:scale(.98); }
+    .btn:hover  { background: var(--pd); }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -89,7 +91,7 @@
   <div class="logo-wrap">
     <div class="logo-icon">📋</div>
     <div class="logo-title">Bulletin Board</div>
-    <div class="logo-sub">Digital Slideshow Admin</div>
+    <div class="logo-sub">Digital Slideshow System</div>
   </div>
 
   <div class="tabs">
@@ -99,105 +101,136 @@
 
   <!-- LOGIN -->
   <div class="form on" id="f-login">
-    <div class="field"><label>Email</label><input type="email"    id="l-email" placeholder="admin@example.com"></div>
-    <div class="field"><label>Password</label><input type="password" id="l-pass"  placeholder="••••••••"></div>
+    <div class="field"><label>Email</label>
+      <input type="email" id="l-email" placeholder="admin@example.com" autocomplete="email">
+    </div>
+    <div class="field"><label>Password</label>
+      <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
     <div class="msg" id="l-msg"></div>
-    <button class="btn" onclick="doLogin()">Sign In</button>
+    <button class="btn" id="l-btn" onclick="doLogin()">Sign In</button>
   </div>
 
   <!-- REGISTER -->
   <div class="form" id="f-register">
-    <div class="field"><label>Full Name</label><input type="text"     id="r-name"   placeholder="Your full name"></div>
-    <div class="field"><label>Email</label>    <input type="email"    id="r-email"  placeholder="you@example.com"></div>
-    <div class="field"><label>Password</label> <input type="password" id="r-pass"   placeholder="Min. 6 characters"></div>
-    <div class="field"><label>Why do you need access?</label><textarea id="r-reason" placeholder="Brief reason..."></textarea></div>
+    <div class="field"><label>Full Name</label>
+      <input type="text" id="r-name" placeholder="Your full name">
+    </div>
+    <div class="field"><label>Email</label>
+      <input type="email" id="r-email" placeholder="you@example.com">
+    </div>
+    <div class="field"><label>Password</label>
+      <input type="password" id="r-pass" placeholder="Min. 6 characters">
+    </div>
+    <div class="field"><label>Why do you need access?</label>
+      <textarea id="r-reason" placeholder="Brief reason for needing admin access..."></textarea>
+    </div>
     <div class="msg" id="r-msg"></div>
-    <button class="btn" onclick="doRegister()">Submit Request</button>
+    <button class="btn" id="r-btn" onclick="doRegister()">Submit Request</button>
   </div>
 </div>
 
 <script type="module">
-// ── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
 import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, set, get, update }
+import { getDatabase, ref, set, get }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
-  authDomain: "digitalbulletinboard-54f06.firebaseapp.com",
-  projectId: "digitalbulletinboard-54f06",
-  storageBucket: "digitalbulletinboard-54f06.firebasestorage.app",
+  apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
+  authDomain:        "digitalbulletinboard-54f06.firebaseapp.com",
+  databaseURL:       "https://digitalbulletinboard-54f06-default-rtdb.firebaseio.com",
+  projectId:         "digitalbulletinboard-54f06",
+  storageBucket:     "digitalbulletinboard-54f06.firebasestorage.app",
   messagingSenderId: "987342604782",
-  appId: "1:987342604782:web:90f8a7e895e8f8a2b026ff"
+  appId:             "1:987342604782:web:90f8a7e895e8f8a2b026ff"
 };
+
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getDatabase(app);
-// ─────────────────────────────────────────────────────────────────────────────
 
+// Tab switch
 window.sw = function(tab) {
   ['login','register'].forEach(t => {
-    document.getElementById('f-'+t).classList.toggle('on', t===tab);
-    document.getElementById('t-'+t).classList.toggle('on', t===tab);
+    document.getElementById('f-'+t).classList.toggle('on', t === tab);
+    document.getElementById('t-'+t).classList.toggle('on', t === tab);
   });
 };
 
+// ── SIGN IN ───────────────────────────────────────────────────────────────────
 window.doLogin = async function() {
   const email = document.getElementById('l-email').value.trim();
   const pass  = document.getElementById('l-pass').value;
   const msg   = document.getElementById('l-msg');
-  msg.className='msg'; msg.textContent='';
+  const btn   = document.getElementById('l-btn');
+  msg.className = 'msg'; msg.textContent = '';
+  if (!email || !pass) { msg.className='msg err'; msg.textContent='Enter your email and password.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
   try {
     const cred = await signInWithEmailAndPassword(auth, email, pass);
     const uid  = cred.user.uid;
-    const snap = await get(ref(db, 'users/'+uid));
+    const snap = await get(ref(db, 'users/' + uid));
     if (!snap.exists()) {
       await signOut(auth);
-      msg.className='msg err'; msg.textContent='User record not found. Contact admin.'; return;
+      msg.className='msg err'; msg.textContent='No user record found. Contact admin.';
+      btn.disabled=false; btn.textContent='Sign In'; return;
     }
     const status = snap.val().status;
-    if (status === 'pending')  { await signOut(auth); msg.className='msg warn'; msg.textContent='⏳ Access pending admin approval.'; return; }
-    if (status === 'rejected') { await signOut(auth); msg.className='msg err';  msg.textContent='❌ Access was rejected. Contact admin.'; return; }
+    if (status === 'pending')  { await signOut(auth); msg.className='msg warn'; msg.textContent='⏳ Your request is pending admin approval.'; btn.disabled=false; btn.textContent='Sign In'; return; }
+    if (status === 'rejected') { await signOut(auth); msg.className='msg err';  msg.textContent='❌ Your access was rejected. Contact admin.'; btn.disabled=false; btn.textContent='Sign In'; return; }
     if (status === 'approved') { window.location.href = 'admin.html'; return; }
   } catch(e) {
-    msg.className='msg err'; msg.textContent = fmtErr(e.code);
+    msg.className='msg err'; msg.textContent = errMsg(e.code);
+    btn.disabled=false; btn.textContent='Sign In';
   }
 };
 
+// Enter key on login
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ── REGISTER ──────────────────────────────────────────────────────────────────
 window.doRegister = async function() {
   const name   = document.getElementById('r-name').value.trim();
   const email  = document.getElementById('r-email').value.trim();
   const pass   = document.getElementById('r-pass').value;
   const reason = document.getElementById('r-reason').value.trim();
   const msg    = document.getElementById('r-msg');
+  const btn    = document.getElementById('r-btn');
   msg.className='msg'; msg.textContent='';
-  if (!name||!email||!pass||!reason) { msg.className='msg err'; msg.textContent='Fill in all fields.'; return; }
+  if (!name||!email||!pass||!reason) { msg.className='msg err'; msg.textContent='Please fill in all fields.'; return; }
+  if (pass.length < 6)               { msg.className='msg err'; msg.textContent='Password must be at least 6 characters.'; return; }
+  btn.disabled=true; btn.textContent='Submitting...';
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const uid  = cred.user.uid;
-    const data = { name, email, reason, status:'pending', requestedAt: Date.now() };
-    await set(ref(db,'users/'+uid), data);
-    await set(ref(db,'notifications/'+uid), { ...data, type:'access_request', notifStatus:'unread' });
+    const payload = { name, email, reason, status:'pending', requestedAt: Date.now() };
+    await set(ref(db, 'users/'+uid), payload);
+    await set(ref(db, 'notifications/'+uid), { ...payload, type:'access_request', notifStatus:'unread' });
     await signOut(auth);
-    msg.className='msg ok'; msg.textContent='✅ Request submitted! Wait for admin approval.';
-    document.getElementById('r-name').value=document.getElementById('r-email').value=document.getElementById('r-pass').value=document.getElementById('r-reason').value='';
+    msg.className='msg ok';
+    msg.textContent='✅ Request submitted! An admin will review it soon.';
+    document.getElementById('r-name').value = document.getElementById('r-email').value =
+    document.getElementById('r-pass').value = document.getElementById('r-reason').value = '';
+    btn.disabled=false; btn.textContent='Submit Request';
   } catch(e) {
-    msg.className='msg err'; msg.textContent = fmtErr(e.code);
+    msg.className='msg err'; msg.textContent=errMsg(e.code);
+    btn.disabled=false; btn.textContent='Submit Request';
   }
 };
 
-function fmtErr(code) {
+function errMsg(code) {
   return ({
-    'auth/email-already-in-use':'Email already registered.',
-    'auth/invalid-email':'Invalid email address.',
-    'auth/weak-password':'Password must be at least 6 characters.',
-    'auth/user-not-found':'No account with that email.',
-    'auth/wrong-password':'Incorrect password.',
-    'auth/invalid-credential':'Incorrect email or password.',
-    'auth/too-many-requests':'Too many attempts. Try again later.',
-  })[code] || 'Something went wrong. Try again.';
+    'auth/email-already-in-use': 'This email is already registered.',
+    'auth/invalid-email':        'Please enter a valid email address.',
+    'auth/weak-password':        'Password needs at least 6 characters.',
+    'auth/user-not-found':       'No account found with that email.',
+    'auth/wrong-password':       'Incorrect password.',
+    'auth/invalid-credential':   'Incorrect email or password.',
+    'auth/too-many-requests':    'Too many attempts. Please wait and try again.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+  })[code] || `Error: ${code}`;
 }
 </script>
 </body>
