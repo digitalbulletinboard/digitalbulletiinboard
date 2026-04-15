@@ -170,11 +170,11 @@ onValue(ref(db,'posts'), snap => {
   }
 });
 
-function buildSlideDOM() {
-  const container = document.getElementById('show');
-  container.innerHTML = '';
+function buildDOM() {
+  const show = document.getElementById('show');
+  show.innerHTML = '';
   if (!slides.length) {
-    container.innerHTML = <div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:18px;color:#7a87a8">No posts yet. Add some from the Admin Panel.</div>;
+    show.innerHTML = `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:18px;color:#7a87a8">No posts yet. Add some from the Admin Panel.</div>`;
     return;
   }
   slides.forEach((item, i) => {
@@ -206,42 +206,42 @@ function buildSlideDOM() {
           </video>
         </div>`;
     }
-    container.appendChild(slide);
+    show.appendChild(slide);
   });
 }
 
-function goToSlide(idx) {
+function restart() {
+  clearTimeout(slideTimer);
   if (!slides.length) return;
-  // Clamp index to valid range
-  cur = ((idx % slides.length) + slides.length) % slides.length;
+  cur = 0; show(0);
+}
 
-  // Hide all, show current
+function show(idx) {
+  if (!slides.length) return;
+  cur = ((idx % slides.length) + slides.length) % slides.length;
   document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById('sl-' + cur);
+  const el = document.getElementById('sl-'+cur);
   if (!el) return;
   el.classList.add('active');
 
-  // Auto-play video if present
+  // play video
   const vid = el.querySelector('video');
-  if (vid) vid.play().catch(() => {});
+  if (vid) vid.play().catch(()=>{});
 
-  // Update slide counter
-  document.getElementById('counter').textContent = ${cur + 1} / ${slides.length};
+  // counter
+  document.getElementById('counter').textContent = `${cur+1} / ${slides.length}`;
 
-  // Animate progress bar
-  const dur = Number(slides[cur]?.duration) || 5000;
+  // progress bar animation
+  const dur = slides[cur]?.duration || 5000;
   const bar = document.getElementById('prog-bar');
-  bar.style.transition = 'none';
-  bar.style.width = '0%';
-  // Double rAF ensures the reset paint happens before the animation starts
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    bar.style.transition = width ${dur}ms linear;
+  bar.style.transition = 'none'; bar.style.width='0%';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bar.style.transition = `width ${dur}ms linear`;
     bar.style.width = '100%';
   }));
 
-  // Schedule next slide
   clearTimeout(slideTimer);
-  slideTimer = setTimeout(() => goToSlide(cur + 1), dur);
+  slideTimer = setTimeout(()=>show(cur+1), dur);
 }
 
 // Safe text
