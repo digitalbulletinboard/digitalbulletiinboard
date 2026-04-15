@@ -150,22 +150,31 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 // ─────────────────────────────────────────────────────────────────────────────
 
-let slides = [], cur = 0, slideTimer = null;
+let slides = [], cur = 0, slideTimer = null, started = false;
 
 // Listen in real-time — rebuilds slides whenever DB changes
 onValue(ref(db,'posts'), snap => {
   slides = [];
   if (snap.exists()) snap.forEach(c => slides.push(c.val()));
   document.getElementById('loader').style.display = 'none';
-  buildDOM();
-  restart();
+  buildSlideDOM();
+  // Only restart from slide 0 on the very first load
+  // On subsequent DB updates (edits/adds), keep the show running smoothly
+  if (!started) {
+    started = true;
+    goToSlide(0);
+  }
+  // If currently shown slide index is now out of range, reset to 0
+  if (cur >= slides.length) {
+    goToSlide(0);
+  }
 });
 
-function buildDOM() {
-  const show = document.getElementById('show');
-  show.innerHTML = '';
+function buildSlideDOM() {
+  const container = document.getElementById('show');
+  container.innerHTML = '';
   if (!slides.length) {
-    show.innerHTML = `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:18px;color:#7a87a8">No posts yet. Add some from the Admin Panel.</div>`;
+    container.innerHTML = <div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:18px;color:#7a87a8">No posts yet. Add some from the Admin Panel.</div>;
     return;
   }
   slides.forEach((item, i) => {
@@ -197,42 +206,42 @@ function buildDOM() {
           </video>
         </div>`;
     }
-    show.appendChild(slide);
+    container.appendChild(slide);
   });
 }
 
-function restart() {
-  clearTimeout(slideTimer);
+function goToSlide(idx) {
   if (!slides.length) return;
-  cur = 0; show(0);
-}
-
-function show(idx) {
-  if (!slides.length) return;
+  // Clamp index to valid range
   cur = ((idx % slides.length) + slides.length) % slides.length;
+
+  // Hide all, show current
   document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById('sl-'+cur);
+  const el = document.getElementById('sl-' + cur);
   if (!el) return;
   el.classList.add('active');
 
-  // play video
+  // Auto-play video if present
   const vid = el.querySelector('video');
-  if (vid) vid.play().catch(()=>{});
+  if (vid) vid.play().catch(() => {});
 
-  // counter
-  document.getElementById('counter').textContent = `${cur+1} / ${slides.length}`;
+  // Update slide counter
+  document.getElementById('counter').textContent = ${cur + 1} / ${slides.length};
 
-  // progress bar animation
-  const dur = slides[cur]?.duration || 5000;
+  // Animate progress bar
+  const dur = Number(slides[cur]?.duration) || 5000;
   const bar = document.getElementById('prog-bar');
-  bar.style.transition = 'none'; bar.style.width='0%';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    bar.style.transition = `width ${dur}ms linear`;
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  // Double rAF ensures the reset paint happens before the animation starts
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    bar.style.transition = width ${dur}ms linear;
     bar.style.width = '100%';
   }));
 
+  // Schedule next slide
   clearTimeout(slideTimer);
-  slideTimer = setTimeout(()=>show(cur+1), dur);
+  slideTimer = setTimeout(() => goToSlide(cur + 1), dur);
 }
 
 // Safe text
