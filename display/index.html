@@ -150,24 +150,15 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 // ─────────────────────────────────────────────────────────────────────────────
 
-let slides = [], cur = 0, slideTimer = null, started = false;
+let slides = [], cur = 0, slideTimer = null;
 
 // Listen in real-time — rebuilds slides whenever DB changes
 onValue(ref(db,'posts'), snap => {
   slides = [];
   if (snap.exists()) snap.forEach(c => slides.push(c.val()));
   document.getElementById('loader').style.display = 'none';
-  buildSlideDOM();
-  // Only restart from slide 0 on the very first load
-  // On subsequent DB updates (edits/adds), keep the show running smoothly
-  if (!started) {
-    started = true;
-    goToSlide(0);
-  }
-  // If currently shown slide index is now out of range, reset to 0
-  if (cur >= slides.length) {
-    goToSlide(0);
-  }
+  buildDOM();
+  restart();
 });
 
 function buildDOM() {
