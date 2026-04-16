@@ -1,25 +1,37 @@
 import { db } from "../firebase.js";
 import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+const postsRef = ref(db, "posts");
+
 let slides = [];
 let currentSlide = 0;
 let data = [];
+let timer = null;
 
-const postsRef = ref(db, "posts");
-
-// FETCH DATA REAL-TIME
+// 🔥 FETCH DATA FROM FIREBASE
 onValue(postsRef, (snapshot) => {
   data = [];
+
+  if (!snapshot.exists()) {
+    console.log("No data found");
+    return;
+  }
+
   snapshot.forEach(child => {
     data.push(child.val());
   });
 
+  console.log("DATA:", data); // DEBUG
+
   renderSlides();
 });
 
+// 🧩 RENDER SLIDES
 function renderSlides() {
   const container = document.getElementById("slideshow");
   container.innerHTML = "";
+
+  if (data.length === 0) return;
 
   data.forEach((item, index) => {
     const slide = document.createElement("div");
@@ -27,25 +39,21 @@ function renderSlides() {
 
     if (index === 0) slide.classList.add("active");
 
+    // TEXT
     if (item.type === "text") {
       slide.innerHTML = `
         <div class="slide-text">
           <div class="category">${item.category || "ANNOUNCEMENT"}</div>
-          <div class="title">${item.title}</div>
-          <div class="content">${item.content}</div>
+          <div class="title">${item.title || ""}</div>
+          <div class="content">${item.content || ""}</div>
         </div>
       `;
     }
 
-    if (item.type === "image") {
-      slide.innerHTML = `
-        <img src="${item.url}" alt="${item.title}" style="width:100%;height:100%;object-fit:${item.fullscreen ? 'cover' : 'contain'};">
-      `;
-    }
-
+    // VIDEO
     if (item.type === "video") {
       slide.innerHTML = `
-        <video autoplay muted style="width:100%;height:100%;object-fit:cover;">
+        <video autoplay muted playsinline>
           <source src="${item.url}" type="video/mp4">
         </video>
       `;
@@ -56,17 +64,36 @@ function renderSlides() {
 
   slides = document.querySelectorAll(".slide");
   currentSlide = 0;
+
+  startSlideshow(); // 🔥 IMPORTANT
+}
+
+// 🔁 START SLIDESHOW
+function startSlideshow() {
+  if (timer) {
+    clearTimeout(timer); // prevent multiple loops
+  }
+
   showSlide();
 }
 
-// FIXED TIMING PER SLIDE
+// 🎯 MAIN LOOP
 function showSlide() {
+  if (slides.length === 0) return;
+
+  // REMOVE ACTIVE
   slides.forEach(s => s.classList.remove("active"));
+
+  // SHOW CURRENT
   slides[currentSlide].classList.add("active");
 
-  const duration = data[currentSlide]?.duration || 5000;
+  // GET DURATION SAFELY
+  const duration = Number(data[currentSlide]?.duration) || 5000;
 
-  setTimeout(() => {
+  console.log("Slide:", currentSlide, "Duration:", duration);
+
+  // NEXT SLIDE
+  timer = setTimeout(() => {
     currentSlide = (currentSlide + 1) % slides.length;
     showSlide();
   }, duration);
