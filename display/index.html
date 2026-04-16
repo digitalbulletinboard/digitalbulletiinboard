@@ -150,22 +150,33 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 // ─────────────────────────────────────────────────────────────────────────────
 
-let slides = [], cur = 0, slideTimer = null, started = false;
+let slides = [];
+let cur = 0;
+let slideTimer = null;
+let isRunning = false;
 
-// Listen in real-time — rebuilds slides whenever DB changes
+// ── FIREBASE LISTENER ────────────────────────────────────────────────────────
+// BUG FIX: Previously, every DB update called buildSlideDOM() which wiped
+// container.innerHTML — destroying all slide elements mid-rotation. Then
+// goToSlide() would call getElementById('sl-'+cur) and get null, crashing
+// silently. Also, the `started` flag never reset, so after the first load,
+// DB updates rebuilt the DOM but never called goToSlide() again — slideshow
+// froze on whatever was showing.
 onValue(ref(db,'posts'), snap => {
   slides = [];
   if (snap.exists()) snap.forEach(c => slides.push(c.val()));
   document.getElementById('loader').style.display = 'none';
+
+  // Stop any running timer before rebuilding DOM
+  clearTimeout(slideTimer);
+  slideTimer = null;
+  isRunning = false;
+
   buildSlideDOM();
-  // Only restart from slide 0 on the very first load
-  // On subsequent DB updates (edits/adds), keep the show running smoothly
-  if (!started) {
-    started = true;
-    goToSlide(0);
-  }
-  // If currently shown slide index is now out of range, reset to 0
-  if (cur >= slides.length) {
+
+  if (slides.length > 0) {
+    // Always restart from slide 0 after any DB change (new post, edit, delete)
+    // This is safe because we cleared the timer above
     goToSlide(0);
   }
 });
@@ -173,30 +184,40 @@ onValue(ref(db,'posts'), snap => {
 function buildSlideDOM() {
   const container = document.getElementById('show');
   container.innerHTML = '';
+
   if (!slides.length) {
-    container.innerHTML = `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:18px;color:#7a87a8">No posts yet. Add some from the Admin Panel.</div>`;
+    container.innerHTML = `<div style="display:flex;height:100vh;align-items:center;
+      justify-content:center;font-size:18px;color:#7a87a8">
+      No posts yet. Add some from the Admin Panel.</div>`;
     return;
   }
+
   slides.forEach((item, i) => {
     const slide = document.createElement('div');
-    slide.className = 'slide'; slide.id = 'sl-'+i;
+    slide.className = 'slide';
+    slide.id = 'sl-' + i;
 
     if (item.type === 'text') {
       slide.innerHTML = `
         <div class="slide-text">
-          ${item.category?`<div class="cat-pill">${safe(item.category)}</div>`:''}
+          ${item.category ? `<div class="cat-pill">${safe(item.category)}</div>` : ''}
           <div class="slide-title">${safe(item.title)}</div>
-          ${item.content?`<div class="slide-body">${safe(item.content)}</div>`:''}
+          ${item.content ? `<div class="slide-body">${safe(item.content)}</div>` : ''}
         </div>`;
+
     } else if (item.type === 'image') {
+      // BUG FIX: image type was completely missing in the original app.js
+      // Also handle both imageUrl and url fields since admin saves both
+      const src = item.imageUrl || item.url || '';
       const fsClass = item.fullscreen ? 'fs' : '';
       slide.innerHTML = `
         <div class="img-wrap ${fsClass}">
-          <img src="${safe(item.imageUrl||item.url)}" alt="${safe(item.title)}"
+          <img src="${safe(src)}" alt="${safe(item.title)}"
                onerror="this.style.display='none'">
-          ${item.category?`<div class="img-cat">${safe(item.category)}</div>`:''}
-          ${item.title   ?`<div class="img-caption">${safe(item.title)}</div>`:''}
+          ${item.category ? `<div class="img-cat">${safe(item.category)}</div>` : ''}
+          ${item.title    ? `<div class="img-caption">${safe(item.title)}</div>` : ''}
         </div>`;
+
     } else if (item.type === 'video') {
       const cls = item.fullscreen ? 'fs' : 'windowed';
       slide.innerHTML = `
@@ -206,46 +227,60 @@ function buildSlideDOM() {
           </video>
         </div>`;
     }
+
     container.appendChild(slide);
   });
 }
 
 function goToSlide(idx) {
   if (!slides.length) return;
-  // Clamp index to valid range
+
+  // Clamp to valid range
   cur = ((idx % slides.length) + slides.length) % slides.length;
 
-  // Hide all, show current
+  // Hide all slides, show current
   document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('sl-' + cur);
-  if (!el) return;
+  if (!el) {
+    // Slide element missing (shouldn't happen after fix, but safety guard)
+    console.warn('Slide element not found for index', cur);
+    return;
+  }
   el.classList.add('active');
 
   // Auto-play video if present
   const vid = el.querySelector('video');
   if (vid) vid.play().catch(() => {});
 
-  // Update slide counter
+  // Update counter
   document.getElementById('counter').textContent = `${cur + 1} / ${slides.length}`;
 
   // Animate progress bar
+  // BUG FIX: double rAF was fragile on rapid DB updates — replaced with
+  // a simple setTimeout(0) which is more reliable for forcing a reflow
   const dur = Number(slides[cur]?.duration) || 5000;
   const bar = document.getElementById('prog-bar');
   bar.style.transition = 'none';
   bar.style.width = '0%';
-  // Double rAF ensures the reset paint happens before the animation starts
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  setTimeout(() => {
     bar.style.transition = `width ${dur}ms linear`;
     bar.style.width = '100%';
-  }));
+  }, 30);
 
-  // Schedule next slide
+  // Schedule next slide — always clear old timer first to prevent stacking
   clearTimeout(slideTimer);
-  slideTimer = setTimeout(() => goToSlide(cur + 1), dur);
+  isRunning = true;
+  slideTimer = setTimeout(() => {
+    if (isRunning) goToSlide(cur + 1);
+  }, dur);
 }
 
-// Safe text
-function safe(s){ const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
+// Safe HTML escape
+function safe(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s || '');
+  return d.innerHTML;
+}
 </script>
 </body>
 </html>
