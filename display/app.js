@@ -37,9 +37,15 @@ function renderSlides() {
       `;
     }
 
+    if (item.type === "image") {
+      slide.innerHTML = `
+        <img src="${item.url}" alt="${item.title}" style="width:100%;height:100%;object-fit:${item.fullscreen ? 'cover' : 'contain'};">
+      `;
+    }
+
     if (item.type === "video") {
       slide.innerHTML = `
-        <video autoplay muted>
+        <video autoplay muted style="width:100%;height:100%;object-fit:cover;">
           <source src="${item.url}" type="video/mp4">
         </video>
       `;
@@ -58,8 +64,10 @@ function showSlide() {
   slides.forEach(s => s.classList.remove("active"));
   slides[currentSlide].classList.add("active");
 
+  const duration = data[currentSlide]?.duration || 5000;
+
   setTimeout(() => {
     currentSlide = (currentSlide + 1) % slides.length;
     showSlide();
-  }, data[currentSlide]?.duration || 5000);
+  }, duration);
 }
