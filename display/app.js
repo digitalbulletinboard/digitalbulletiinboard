@@ -4,13 +4,22 @@ import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebas
 let slides = [];
 let currentSlide = 0;
 let data = [];
-let timer = null;
+
+const postsRef = ref(db, "posts");
+
+// FETCH DATA REAL-TIME
+onValue(postsRef, (snapshot) => {
+  data = [];
+  snapshot.forEach(child => {
+    data.push(child.val());
+  });
+
+  renderSlides();
+});
 
 function renderSlides() {
   const container = document.getElementById("slideshow");
   container.innerHTML = "";
-
-  if (data.length === 0) return;
 
   data.forEach((item, index) => {
     const slide = document.createElement("div");
@@ -41,32 +50,16 @@ function renderSlides() {
 
   slides = document.querySelectorAll(".slide");
   currentSlide = 0;
-
-  startSlideshow(); // start after render
-}
-
-function startSlideshow() {
-  // CLEAR OLD TIMER (IMPORTANT)
-  if (timer) clearTimeout(timer);
-
   showSlide();
 }
 
+// FIXED TIMING PER SLIDE
 function showSlide() {
-  if (slides.length === 0) return;
-
-  // REMOVE ALL ACTIVE
   slides.forEach(s => s.classList.remove("active"));
-
-  // SHOW CURRENT
   slides[currentSlide].classList.add("active");
 
-  // GET CURRENT DURATION SAFELY
-  const duration = data[currentSlide]?.duration || 5000;
-
-  // SET NEXT
-  timer = setTimeout(() => {
+  setTimeout(() => {
     currentSlide = (currentSlide + 1) % slides.length;
     showSlide();
-  }, duration);
+  }, data[currentSlide]?.duration || 5000);
 }
