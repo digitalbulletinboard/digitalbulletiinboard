@@ -27,6 +27,7 @@
       color: white;
     }
 
+    /* ═══════════════════════════════ BACKGROUND ═══════════════════════════════ */
     #bg-canvas {
       position: fixed; inset: 0; z-index: 0;
       background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #0f172a 100%);
@@ -43,184 +44,64 @@
       to   { transform: translate(40px, 30px) scale(1.08); }
     }
 
+    /* ═══════════════════════════════ LAYOUT ═══════════════════════════════════ */
     #app {
       position: relative; z-index: 1;
       width: 100vw; height: 100vh;
       display: grid;
       grid-template-rows: auto 1fr auto;
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 300px;
       grid-template-areas:
-        "topbar"
-        "slides"
-        "progbar";
+        "topbar  topbar"
+        "slides  sidebar"
+        "progbar progbar";
       gap: 0;
     }
 
-    /* ── TOP BAR ── */
+    /* ═══════════════════════════════ TOP BAR ══════════════════════════════════ */
     #topbar {
       grid-area: topbar;
-      display: flex; align-items: center; gap: 0;
-      padding: 0 20px;
-      height: 64px;
-      background: rgba(15,23,42,0.72);
-      backdrop-filter: blur(24px);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(15,23,42,0.55);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
     }
-
     .tb-brand {
-      display: flex; align-items: center; gap: 9px;
-      flex-shrink: 0; padding-right: 20px;
-      border-right: 1px solid rgba(255,255,255,0.10);
+      display: flex; align-items: center; gap: 10px;
     }
     .tb-icon {
-      font-size: 18px;
+      font-size: 22px;
       background: linear-gradient(135deg, var(--blue), var(--violet));
-      width: 34px; height: 34px; border-radius: 9px;
+      width: 38px; height: 38px;
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
     }
     .tb-name {
       font-family: 'Playfair Display', serif;
-      font-size: 16px; font-weight: 700; color: white; white-space: nowrap;
+      font-size: 18px; font-weight: 700; letter-spacing: 0.01em;
+      color: white;
     }
-
-    .tb-widgets {
-      display: flex; align-items: center; gap: 0;
-      flex: 1; overflow: hidden; height: 100%;
-      min-width: 0;
+    .tb-right {
+      display: flex; align-items: center; gap: 20px;
     }
-
-    .tb-div {
-      width: 1px; height: 36px; background: rgba(255,255,255,0.10);
-      flex-shrink: 0;
-    }
-
-    /* ── Weather ── */
-    .tb-weather {
-      display: flex; align-items: center; gap: 8px;
-      padding: 0 14px; height: 100%; flex-shrink: 0;
-    }
-    .tbwx-icon { font-size: 26px; line-height: 1; }
-    .tbwx-temp {
-      font-size: 18px; font-weight: 700; color: white;
-      line-height: 1; letter-spacing: -0.02em;
-    }
-    .tbwx-desc {
-      font-size: 10px; color: rgba(255,255,255,0.45);
-      white-space: nowrap; letter-spacing: 0.02em;
-    }
-    .tbwx-details {
-      display: flex; gap: 6px; margin-left: 4px;
-    }
-    .tbwx-chip {
-      display: flex; flex-direction: column; align-items: center;
-      background: rgba(255,255,255,0.07); border-radius: 7px;
-      padding: 3px 7px;
-    }
-    .tbwx-chip-label { font-size: 8px; color: rgba(255,255,255,0.35); letter-spacing: 0.06em; text-transform: uppercase; }
-    .tbwx-chip-val   { font-size: 11px; font-weight: 600; color: white; }
-    .tbwx-loc {
-      font-size: 9px; color: rgba(255,255,255,0.3);
-      white-space: nowrap; margin-left: 2px;
-    }
-
-    /* ── Calendar — FIXED: wider cells, no overflow ── */
-    .tb-cal {
-      display: flex; align-items: center; gap: 10px;
-      padding: 0 14px; height: 100%; flex-shrink: 0;
-    }
-    .tbcal-left {}
-    .tbcal-month {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; color: rgba(255,255,255,0.4);
-      margin-bottom: 2px;
-    }
-    .tbcal-nav {
-      display: flex; align-items: center; gap: 4px;
-    }
-    .tbcal-nav button {
-      background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.6);
-      width: 20px; height: 20px; border-radius: 5px;
-      cursor: pointer; font-size: 11px;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s;
-    }
-    .tbcal-nav button:hover { background: rgba(255,255,255,0.18); color: white; }
-    .tbcal-month-label { font-size: 12px; font-weight: 600; color: white; min-width: 60px; text-align: center; }
-    /* FIXED: increased cell width from 22px to 26px so dates don't get clipped */
-    .tbcal-grid {
-      display: grid; grid-template-columns: repeat(7, 26px);
-      gap: 1px; text-align: center;
-    }
-    .tbcal-dow {
-      font-size: 8px; font-weight: 700; letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.25); padding: 1px 0;
-    }
-    .tbcal-day {
-      font-size: 10px; padding: 2px 0;
-      border-radius: 4px; color: rgba(255,255,255,0.45);
-      cursor: default; transition: background 0.15s; line-height: 1.6;
-    }
-    .tbcal-day.other { color: rgba(255,255,255,0.15); }
-    .tbcal-day.today {
-      background: linear-gradient(135deg, var(--blue), var(--violet));
-      color: white; font-weight: 700;
-    }
-
-    /* ── Slide List ── */
-    .tb-slides {
-      display: flex; align-items: center; gap: 6px;
-      padding: 0 14px; height: 100%;
-      flex: 1; overflow: hidden; min-width: 0;
-    }
-    .tbsl-label {
-      font-size: 9px; font-weight: 700; letter-spacing: 0.10em;
-      text-transform: uppercase; color: rgba(255,255,255,0.3);
-      flex-shrink: 0;
-    }
-    .tbsl-items {
-      display: flex; gap: 5px; overflow: hidden;
-      flex: 1; min-width: 0;
-    }
-    .tbsl-item {
-      display: flex; align-items: center; gap: 4px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid transparent;
-      border-radius: 7px; padding: 3px 8px;
-      cursor: pointer; transition: all 0.18s;
-      flex-shrink: 0; max-width: 100px;
-    }
-    .tbsl-item.current {
-      background: rgba(99,102,241,0.28);
-      border-color: rgba(99,102,241,0.50);
-    }
-    .tbsl-dot {
-      width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
-    }
-    .tbsl-text {
-      font-size: 10px; color: rgba(255,255,255,0.45);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .tbsl-item.current .tbsl-text { color: #c7d2fe; font-weight: 600; }
-
-    /* Clock */
+    /* Clock in top bar */
     #clock-display {
-      flex-shrink: 0; text-align: right;
-      padding-left: 16px;
-      border-left: 1px solid rgba(255,255,255,0.10);
+      text-align: right;
     }
     #clock-time {
-      font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+      font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
       background: linear-gradient(90deg, #93c5fd, #c4b5fd);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       line-height: 1;
     }
     #clock-date {
-      font-size: 9px; color: rgba(255,255,255,0.4);
-      letter-spacing: 0.07em; text-transform: uppercase;
-      margin-top: 2px; white-space: nowrap;
+      font-size: 11px; color: rgba(255,255,255,0.5);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-top: 2px;
     }
 
-    /* ── SLIDES ── */
+    /* ═══════════════════════════════ SLIDES ═══════════════════════════════════ */
     #slideshow {
       grid-area: slides;
       position: relative; overflow: hidden;
@@ -233,7 +114,7 @@
     }
     .slide.active { opacity: 1; pointer-events: auto; }
 
-    /* TEXT SLIDE — FIXED: word-wrap, text flows downward */
+    /* Text slide */
     .slide-text {
       width: 78%; max-width: 860px;
       text-align: center;
@@ -244,11 +125,6 @@
       border: 1px solid rgba(255,255,255,0.16);
       box-shadow: 0 32px 80px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
       animation: floatUp 0.65s ease;
-      /* FIXED: ensure text wraps downward, no horizontal overflow */
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      overflow: hidden;
     }
     @keyframes floatUp {
       from { opacity: 0; transform: translateY(28px); }
@@ -262,53 +138,23 @@
       background: rgba(59,130,246,0.22);
       border: 1px solid rgba(59,130,246,0.35);
       padding: 5px 18px; border-radius: 99px; margin-bottom: 22px;
-      /* FIXED: wrap long category text */
-      word-break: break-word; white-space: normal;
     }
-    /* FIXED: title wraps downward, no horizontal scroll */
     .slide-title {
       font-family: 'Playfair Display', serif;
       font-size: clamp(28px, 4.5vw, 58px);
       font-weight: 700; color: white;
       line-height: 1.18; margin-bottom: 18px;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      white-space: normal;
     }
-    /* FIXED: body text wraps downward */
     .slide-body {
       font-size: clamp(15px, 1.8vw, 22px);
       color: rgba(255,255,255,0.72);
       line-height: 1.7; font-weight: 300;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      white-space: normal;
     }
 
-    /* IMAGE SLIDE — blurred backdrop fills gaps, main image stays uncropped */
-    .img-wrap {
-      width: 100%; height: 100%;
-      position: relative; display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-    }
-    /* Blurred background fills the letterbox/pillarbox gaps */
-    .img-wrap .img-blur-bg {
-      position: absolute; inset: -20px;
-      background-size: cover; background-position: center;
-      filter: blur(28px) brightness(0.55) saturate(1.3);
-      transform: scale(1.08);
-      z-index: 0;
-    }
-    /* Main image stays fully visible, centered on top */
-    .img-wrap.fs img {
-      position: relative; z-index: 1;
-      width: 100%; height: 100%;
-      object-fit: contain;
-    }
+    /* Image slide */
+    .img-wrap { width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
+    .img-wrap.fs img { width: 100%; height: 100%; object-fit: cover; }
     .img-wrap:not(.fs) img {
-      position: relative; z-index: 1;
       max-width: 88vw; max-height: 82vh; object-fit: contain;
       border-radius: 20px; box-shadow: 0 24px 72px rgba(0,0,0,0.5);
     }
@@ -317,7 +163,6 @@
       background: rgba(99,102,241,0.82); backdrop-filter: blur(10px);
       color: #fff; padding: 6px 20px; border-radius: 99px;
       font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-      z-index: 2;
     }
     .img-caption {
       position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
@@ -325,12 +170,11 @@
       color: #fff; padding: 10px 28px; border-radius: 99px;
       font-size: clamp(13px,1.4vw,16px); font-weight: 500;
       white-space: nowrap; max-width: 82vw; overflow: hidden; text-overflow: ellipsis;
-      z-index: 2;
     }
 
-    /* VIDEO SLIDE */
+    /* Video slide */
     .vid-wrap.fs { width: 100%; height: 100%; }
-    .vid-wrap.fs video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+    .vid-wrap.fs video { width: 100%; height: 100%; object-fit: cover; }
     .vid-wrap.windowed {
       width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
@@ -340,7 +184,137 @@
       border-radius: 16px; box-shadow: 0 24px 72px rgba(0,0,0,0.5);
     }
 
-    /* ── PROGRESS BAR ── */
+    /* ═══════════════════════════════ SIDEBAR ══════════════════════════════════ */
+    #sidebar {
+      grid-area: sidebar;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 14px 14px 14px 8px;
+      background: rgba(15,23,42,0.55);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid rgba(255,255,255,0.07);
+      overflow: hidden;
+    }
+
+    .widget {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px; padding: 16px;
+      flex-shrink: 0;
+    }
+    .widget-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.38);
+      margin-bottom: 10px;
+    }
+
+    /* ── Weather widget ── */
+    #weather-widget {}
+    .wx-main {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    }
+    .wx-icon { font-size: 42px; line-height: 1; }
+    .wx-right {}
+    .wx-temp {
+      font-size: 32px; font-weight: 700; letter-spacing: -0.03em;
+      color: white; line-height: 1;
+    }
+    .wx-temp sup { font-size: 16px; font-weight: 400; vertical-align: super; }
+    .wx-desc {
+      font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px;
+    }
+    .wx-details {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .wx-detail {
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px; padding: 6px 10px;
+      font-size: 11px; color: rgba(255,255,255,0.55);
+    }
+    .wx-detail span { display: block; font-size: 13px; font-weight: 600; color: white; margin-top: 1px; }
+    .wx-location {
+      font-size: 11px; color: rgba(255,255,255,0.4);
+      margin-top: 8px; display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── Calendar widget ── */
+    #cal-widget {}
+    .cal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .cal-month {
+      font-size: 14px; font-weight: 600; color: white;
+    }
+    .cal-nav {
+      display: flex; gap: 4px;
+    }
+    .cal-nav button {
+      background: rgba(255,255,255,0.10); border: none; color: white;
+      width: 26px; height: 26px; border-radius: 7px;
+      cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .cal-nav button:hover { background: rgba(255,255,255,0.20); }
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 2px; text-align: center;
+    }
+    .cal-dow {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.3); padding: 3px 0;
+    }
+    .cal-day {
+      font-size: 11px; padding: 4px 2px;
+      border-radius: 6px; color: rgba(255,255,255,0.55);
+      cursor: default; transition: background 0.15s;
+    }
+    .cal-day.other { color: rgba(255,255,255,0.18); }
+    .cal-day.today {
+      background: linear-gradient(135deg, var(--blue), var(--violet));
+      color: white; font-weight: 700;
+    }
+    .cal-day:not(.other):not(.today):hover { background: rgba(255,255,255,0.10); }
+
+    /* ── Slide list mini ── */
+    #slide-list-widget { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .slide-items {
+      overflow-y: auto; flex: 1;
+      display: flex; flex-direction: column; gap: 6px;
+      scrollbar-width: none;
+    }
+    .slide-items::-webkit-scrollbar { display: none; }
+    .slide-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 10px;
+      border: 1px solid transparent;
+      transition: all 0.2s; cursor: pointer;
+      background: rgba(255,255,255,0.04);
+    }
+    .slide-item.current {
+      background: rgba(99,102,241,0.22);
+      border-color: rgba(99,102,241,0.40);
+    }
+    .slide-num {
+      font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.3);
+      min-width: 16px; text-align: center;
+    }
+    .slide-item.current .slide-num { color: #a5b4fc; }
+    .slide-type-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-text  { background: #60a5fa; }
+    .dot-image { background: #34d399; }
+    .dot-video { background: #f59e0b; }
+    .slide-label {
+      font-size: 11px; color: rgba(255,255,255,0.55);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      flex: 1;
+    }
+    .slide-item.current .slide-label { color: #e0e7ff; font-weight: 500; }
+
+    /* ═══════════════════════════════ PROGRESS BAR ═════════════════════════════ */
     #prog-wrap {
       grid-area: progbar;
       height: 4px; background: rgba(255,255,255,0.08); position: relative;
@@ -362,7 +336,7 @@
       letter-spacing: 0.1em; font-weight: 600; z-index: 20;
     }
 
-    /* ── LOADER ── */
+    /* ═══════════════════════════════ LOADER ═══════════════════════════════════ */
     #loader {
       position: fixed; inset: 0; z-index: 999;
       background: #0f172a;
@@ -400,46 +374,48 @@
       <div class="tb-icon">📋</div>
       <div class="tb-name">Bulletin Board</div>
     </div>
-
-    <div class="tb-widgets">
-      <div class="tb-div"></div>
-      <div class="tb-weather">
-        <div class="tbwx-icon" id="tbwx-icon">🌡</div>
-        <div class="tbwx-info">
-          <div class="tbwx-temp" id="tbwx-temp">--°C</div>
-          <div class="tbwx-desc" id="tbwx-desc">Loading…</div>
-        </div>
-        <div class="tbwx-details" id="tbwx-details"></div>
-        <div class="tbwx-loc" id="tbwx-loc"></div>
+    <div class="tb-right">
+      <div id="clock-display">
+        <div id="clock-time">--:--</div>
+        <div id="clock-date">Loading…</div>
       </div>
-
-      <div class="tb-div"></div>
-      <div class="tb-cal">
-        <div class="tbcal-left">
-          <div class="tbcal-month">Calendar</div>
-          <div class="tbcal-nav">
-            <button onclick="calNav(-1)">‹</button>
-            <span class="tbcal-month-label" id="cal-month-label">—</span>
-            <button onclick="calNav(1)">›</button>
-          </div>
-        </div>
-        <div class="tbcal-grid" id="cal-grid"></div>
-      </div>
-
-      <div class="tb-div"></div>
-      <div class="tb-slides">
-        <div class="tbsl-label">Slides</div>
-        <div class="tbsl-items" id="slide-items"></div>
-      </div>
-    </div>
-
-    <div id="clock-display">
-      <div id="clock-time">--:--</div>
-      <div id="clock-date">Loading…</div>
     </div>
   </div>
 
+  <!-- MAIN SLIDESHOW -->
   <div id="slideshow"></div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <!-- Weather -->
+    <div class="widget" id="weather-widget">
+      <div class="widget-title">📍 Weather</div>
+      <div id="wx-body">
+        <div style="color:rgba(255,255,255,0.3);font-size:12px;">Detecting location…</div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="widget" id="cal-widget">
+      <div class="widget-title">📅 Calendar</div>
+      <div class="cal-header">
+        <div class="cal-month" id="cal-month-label">—</div>
+        <div class="cal-nav">
+          <button onclick="calNav(-1)">‹</button>
+          <button onclick="calNav(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <!-- Slide List -->
+    <div class="widget" id="slide-list-widget">
+      <div class="widget-title">🗂 Slides</div>
+      <div class="slide-items" id="slide-items"></div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
   <div id="prog-wrap"><div id="prog-bar"></div></div>
 </div>
 
@@ -450,6 +426,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
   authDomain:        "digitalbulletinboard-54f06.firebaseapp.com",
@@ -462,7 +439,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
-// ── CLOCK ──
+// ════════════════════════════════════════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════════════════════════════════════════
 function updateClock() {
   const now  = new Date();
   const h    = String(now.getHours()).padStart(2,'0');
@@ -477,7 +456,9 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-// ── CALENDAR ──
+// ════════════════════════════════════════════════════════════════════════════
+//  CALENDAR
+// ════════════════════════════════════════════════════════════════════════════
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 const today = new Date();
@@ -495,14 +476,15 @@ function renderCalendar() {
   const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
   document.getElementById('cal-month-label').textContent =
-    `${MONTHS[calMonth].slice(0,3)} ${calYear}`;
+    `${MONTHS[calMonth]} ${calYear}`;
 
   const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
 
+  // Day-of-week headers
   DAYS.forEach(d => {
     const el = document.createElement('div');
-    el.className = 'tbcal-dow'; el.textContent = d;
+    el.className = 'cal-dow'; el.textContent = d;
     grid.appendChild(el);
   });
 
@@ -510,33 +492,39 @@ function renderCalendar() {
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
 
+  // Prev month padding
   for (let i = firstDay - 1; i >= 0; i--) {
     const el = document.createElement('div');
-    el.className = 'tbcal-day other';
+    el.className = 'cal-day other';
     el.textContent = prevMonthDays - i;
     grid.appendChild(el);
   }
 
+  // Current month
   for (let d = 1; d <= daysInMonth; d++) {
     const el = document.createElement('div');
-    el.className = 'tbcal-day';
+    el.className = 'cal-day';
     const isToday = (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear());
     if (isToday) el.classList.add('today');
     el.textContent = d;
     grid.appendChild(el);
   }
 
+  // Next month padding
   const total = firstDay + daysInMonth;
   const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
   for (let d = 1; d <= remaining; d++) {
     const el = document.createElement('div');
-    el.className = 'tbcal-day other'; el.textContent = d;
+    el.className = 'cal-day other'; el.textContent = d;
     grid.appendChild(el);
   }
 }
+
 renderCalendar();
 
-// ── WEATHER ──
+// ════════════════════════════════════════════════════════════════════════════
+//  WEATHER (Open-Meteo — no API key needed)
+// ════════════════════════════════════════════════════════════════════════════
 const WX_CODES = {
   0:'Clear Sky',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',
   45:'Foggy',48:'Icy Fog',
@@ -547,6 +535,7 @@ const WX_CODES = {
   85:'Snow Showers',86:'Heavy Snow Showers',
   95:'Thunderstorm',96:'Thunderstorm w/ Hail',99:'Thunderstorm w/ Heavy Hail'
 };
+
 const WX_ICONS = {
   0:'☀️',1:'🌤',2:'⛅',3:'☁️',
   45:'🌫',48:'🌫',
@@ -563,30 +552,50 @@ async function loadWeather(lat, lon, locationName) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
       + `&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,relative_humidity_2m`
       + `&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`;
+
     const res = await fetch(url);
     const data = await res.json();
     const c = data.current;
     const code = c.weathercode;
-    document.getElementById('tbwx-icon').textContent = WX_ICONS[code] || '🌡';
-    document.getElementById('tbwx-temp').textContent = `${Math.round(c.temperature_2m)}°C`;
-    document.getElementById('tbwx-desc').textContent = WX_CODES[code] || 'Unknown';
-    document.getElementById('tbwx-loc').textContent  = `📍 ${locationName}`;
-    document.getElementById('tbwx-details').innerHTML = `
-      <div class="tbwx-chip"><span class="tbwx-chip-label">Feels</span><span class="tbwx-chip-val">${Math.round(c.apparent_temperature)}°</span></div>
-      <div class="tbwx-chip"><span class="tbwx-chip-label">Humid</span><span class="tbwx-chip-val">${c.relative_humidity_2m}%</span></div>
-      <div class="tbwx-chip"><span class="tbwx-chip-label">Wind</span><span class="tbwx-chip-val">${Math.round(c.windspeed_10m)}km/h</span></div>
+
+    const icon = WX_ICONS[code] || '🌡';
+    const desc = WX_CODES[code] || 'Unknown';
+
+    document.getElementById('wx-body').innerHTML = `
+      <div class="wx-main">
+        <div class="wx-icon">${icon}</div>
+        <div class="wx-right">
+          <div class="wx-temp">${Math.round(c.temperature_2m)}<sup>°C</sup></div>
+          <div class="wx-desc">${desc}</div>
+        </div>
+      </div>
+      <div class="wx-details">
+        <div class="wx-detail">Feels like<span>${Math.round(c.apparent_temperature)}°C</span></div>
+        <div class="wx-detail">Humidity<span>${c.relative_humidity_2m}%</span></div>
+        <div class="wx-detail">Wind<span>${Math.round(c.windspeed_10m)} km/h</span></div>
+        <div class="wx-detail">Condition<span>${icon}</span></div>
+      </div>
+      <div class="wx-location">📍 ${locationName}</div>
     `;
   } catch(e) {
-    document.getElementById('tbwx-desc').textContent = 'Unavailable';
+    document.getElementById('wx-body').innerHTML =
+      `<div style="color:rgba(255,255,255,0.3);font-size:11px;">Weather unavailable</div>`;
   }
 }
 
+// Try to get user location; fall back to Cebu City, PH
 function initWeather() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      pos => loadWeather(pos.coords.latitude, pos.coords.longitude,
-        `${pos.coords.latitude.toFixed(2)}°N, ${pos.coords.longitude.toFixed(2)}°E`),
-      () => loadWeather(10.3157, 123.8854, 'Cebu City, PH'),
+      pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        // Reverse geocode with Open-Meteo nominatim doesn't exist, use coords label
+        loadWeather(lat, lon, `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E`);
+      },
+      () => {
+        // Fallback: Cebu City, Philippines
+        loadWeather(10.3157, 123.8854, 'Cebu City, PH');
+      },
       { timeout: 6000 }
     );
   } else {
@@ -594,9 +603,12 @@ function initWeather() {
   }
 }
 initWeather();
+// Refresh weather every 10 minutes
 setInterval(initWeather, 10 * 60 * 1000);
 
-// ── SLIDESHOW ──
+// ════════════════════════════════════════════════════════════════════════════
+//  SLIDESHOW
+// ════════════════════════════════════════════════════════════════════════════
 let slides = [], cur = 0, slideTimer = null, started = false;
 
 function safe(s) {
@@ -611,7 +623,11 @@ onValue(ref(db,'posts'), snap => {
   document.getElementById('loader').classList.add('hidden');
   buildSlideDOM();
   renderSlideList();
-  if (!started) { started = true; goToSlide(0); }
+
+  if (!started) {
+    started = true;
+    goToSlide(0);
+  }
   if (cur >= slides.length) goToSlide(0);
 });
 
@@ -644,11 +660,9 @@ function buildSlideDOM() {
 
     } else if (item.type === 'image') {
       const fsClass = item.fullscreen ? 'fs' : '';
-      const imgSrc = safe(item.imageUrl || item.url);
       slide.innerHTML = `
         <div class="img-wrap ${fsClass}">
-          <div class="img-blur-bg" style="background-image:url('${imgSrc}')"></div>
-          <img src="${imgSrc}" alt="${safe(item.title)}"
+          <img src="${safe(item.imageUrl || item.url)}" alt="${safe(item.title)}"
                onerror="this.style.display='none'">
           ${item.category ? `<div class="img-cat">${safe(item.category)}</div>` : ''}
           ${item.title    ? `<div class="img-caption">${safe(item.title)}</div>` : ''}
@@ -673,21 +687,24 @@ function renderSlideList() {
   list.innerHTML = '';
   slides.forEach((item, i) => {
     const el = document.createElement('div');
-    el.className = 'tbsl-item' + (i === cur ? ' current' : '');
+    el.className = 'slide-item' + (i === cur ? ' current' : '');
     el.id = 'sli-' + i;
     el.onclick = () => { clearTimeout(slideTimer); goToSlide(i); };
+    const dotClass = item.type === 'video' ? 'dot-video' : item.type === 'image' ? 'dot-image' : 'dot-text';
     el.innerHTML = `
-      <span class="tbsl-dot"></span>
-      <span class="tbsl-text">${safe(item.title || item.type || 'Slide')}</span>
+      <span class="slide-num">${i+1}</span>
+      <span class="slide-type-dot ${dotClass}"></span>
+      <span class="slide-label">${safe(item.title || item.type || 'Slide')}</span>
     `;
     list.appendChild(el);
   });
 }
 
 function updateSlideListHighlight() {
-  document.querySelectorAll('.tbsl-item').forEach((el, i) => {
+  document.querySelectorAll('.slide-item').forEach((el, i) => {
     el.classList.toggle('current', i === cur);
   });
+  // Scroll into view
   const active = document.getElementById('sli-' + cur);
   if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -701,11 +718,14 @@ function goToSlide(idx) {
   if (!el) return;
   el.classList.add('active');
 
+  // Autoplay video
   const vid = el.querySelector('video');
   if (vid) { vid.currentTime = 0; vid.play().catch(() => {}); }
 
+  // Counter
   document.getElementById('counter').textContent = `${cur + 1} / ${slides.length}`;
 
+  // Progress bar
   const dur = Number(slides[cur]?.duration) || 5000;
   const bar = document.getElementById('prog-bar');
   bar.style.transition = 'none';
@@ -715,7 +735,9 @@ function goToSlide(idx) {
     bar.style.width = '100%';
   }));
 
+  // Update slide list highlight
   updateSlideListHighlight();
+
   clearTimeout(slideTimer);
   slideTimer = setTimeout(() => goToSlide(cur + 1), dur);
 }
