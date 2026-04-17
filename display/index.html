@@ -4,131 +4,421 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bulletin Board</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    html, body { width:100%; height:100%; overflow:hidden; }
-    body {
-      font-family:'DM Sans',sans-serif;
-      background: linear-gradient(135deg,#eef2ff 0%,#f0f4ff 45%,#e8f0fe 100%);
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+
+    :root {
+      --ink:     #0f172a;
+      --ink2:    #334155;
+      --muted:   #64748b;
+      --blue:    #3b82f6;
+      --indigo:  #6366f1;
+      --violet:  #8b5cf6;
+      --surface: rgba(255,255,255,0.92);
+      --glass:   rgba(255,255,255,0.14);
+      --glassbg: rgba(15,23,42,0.42);
     }
 
-    /* ── SLIDESHOW ── */
-    #show { width:100vw; height:100vh; position:relative; overflow:hidden; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    /* ═══════════════════════════════ BACKGROUND ═══════════════════════════════ */
+    #bg-canvas {
+      position: fixed; inset: 0; z-index: 0;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #0f172a 100%);
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.35;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 600px; height: 600px; background: #3b82f6; top: -150px; left: -150px; animation-delay: 0s; }
+    .orb2 { width: 500px; height: 500px; background: #8b5cf6; bottom: -100px; right: -100px; animation-delay: -4s; }
+    .orb3 { width: 350px; height: 350px; background: #06b6d4; top: 40%; left: 35%; animation-delay: -8s; }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    /* ═══════════════════════════════ LAYOUT ═══════════════════════════════════ */
+    #app {
+      position: relative; z-index: 1;
+      width: 100vw; height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      grid-template-columns: 1fr 300px;
+      grid-template-areas:
+        "topbar  topbar"
+        "slides  sidebar"
+        "progbar progbar";
+      gap: 0;
+    }
+
+    /* ═══════════════════════════════ TOP BAR ══════════════════════════════════ */
+    #topbar {
+      grid-area: topbar;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(15,23,42,0.55);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .tb-brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tb-icon {
+      font-size: 22px;
+      background: linear-gradient(135deg, var(--blue), var(--violet));
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tb-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; font-weight: 700; letter-spacing: 0.01em;
+      color: white;
+    }
+    .tb-right {
+      display: flex; align-items: center; gap: 20px;
+    }
+    /* Clock in top bar */
+    #clock-display {
+      text-align: right;
+    }
+    #clock-time {
+      font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #93c5fd, #c4b5fd);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    #clock-date {
+      font-size: 11px; color: rgba(255,255,255,0.5);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ═══════════════════════════════ SLIDES ═══════════════════════════════════ */
+    #slideshow {
+      grid-area: slides;
+      position: relative; overflow: hidden;
+    }
 
     .slide {
-      position:absolute; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      opacity:0; transition:opacity .9s ease; pointer-events:none;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.9s ease; pointer-events: none;
     }
-    .slide.active { opacity:1; pointer-events:auto; }
+    .slide.active { opacity: 1; pointer-events: auto; }
 
-    /* ── TEXT ── */
+    /* Text slide */
     .slide-text {
-      width:82%; max-width:980px; text-align:center;
-      padding:56px 68px;
-      background:rgba(255,255,255,.86);
-      backdrop-filter:blur(28px);
-      border-radius:30px;
-      box-shadow:0 20px 64px rgba(91,127,255,.15), 0 2px 10px rgba(0,0,0,.05);
-      border:1px solid rgba(255,255,255,.95);
-      animation:floatUp .65s ease;
+      width: 78%; max-width: 860px;
+      text-align: center;
+      padding: 52px 64px;
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(32px);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+      animation: floatUp 0.65s ease;
     }
-    @keyframes floatUp { from{opacity:0;transform:translateY(26px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes floatUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
     .cat-pill {
-      display:inline-block; font-size:12px; font-weight:700;
-      letter-spacing:.14em; text-transform:uppercase;
-      color:#5b7fff; background:#dce5ff;
-      padding:6px 20px; border-radius:99px; margin-bottom:24px;
+      display: inline-block;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #93c5fd;
+      background: rgba(59,130,246,0.22);
+      border: 1px solid rgba(59,130,246,0.35);
+      padding: 5px 18px; border-radius: 99px; margin-bottom: 22px;
     }
     .slide-title {
-      font-family:'Playfair Display',serif;
-      font-size:clamp(28px,5.5vw,62px);
-      color:#1e2a4a; line-height:1.18; margin-bottom:20px;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 4.5vw, 58px);
+      font-weight: 700; color: white;
+      line-height: 1.18; margin-bottom: 18px;
     }
     .slide-body {
-      font-size:clamp(15px,2.4vw,28px);
-      color:#4a5568; line-height:1.68; font-weight:300;
+      font-size: clamp(15px, 1.8vw, 22px);
+      color: rgba(255,255,255,0.72);
+      line-height: 1.7; font-weight: 300;
     }
 
-    /* ── IMAGE ── */
-    .img-wrap {
-      width:100%; height:100%; position:relative;
-      display:flex; align-items:center; justify-content:center;
-    }
-    .img-wrap.fs img { width:100%; height:100%; object-fit:cover; }
+    /* Image slide */
+    .img-wrap { width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
+    .img-wrap.fs img { width: 100%; height: 100%; object-fit: cover; }
     .img-wrap:not(.fs) img {
-      max-width:90vw; max-height:90vh; object-fit:contain;
-      border-radius:22px;
-      box-shadow:0 24px 72px rgba(0,0,0,.20);
+      max-width: 88vw; max-height: 82vh; object-fit: contain;
+      border-radius: 20px; box-shadow: 0 24px 72px rgba(0,0,0,0.5);
     }
     .img-cat {
-      position:absolute; top:30px; left:50%; transform:translateX(-50%);
-      background:rgba(91,127,255,.88); backdrop-filter:blur(10px);
-      color:#fff; padding:7px 22px; border-radius:99px;
-      font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+      position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(99,102,241,0.82); backdrop-filter: blur(10px);
+      color: #fff; padding: 6px 20px; border-radius: 99px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
     }
     .img-caption {
-      position:absolute; bottom:34px; left:50%; transform:translateX(-50%);
-      background:rgba(30,42,74,.75); backdrop-filter:blur(14px);
-      color:#fff; padding:11px 30px; border-radius:99px;
-      font-size:clamp(13px,1.5vw,17px); font-weight:500;
-      white-space:nowrap; max-width:84vw; overflow:hidden; text-overflow:ellipsis;
+      position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: rgba(15,23,42,0.75); backdrop-filter: blur(14px);
+      color: #fff; padding: 10px 28px; border-radius: 99px;
+      font-size: clamp(13px,1.4vw,16px); font-weight: 500;
+      white-space: nowrap; max-width: 82vw; overflow: hidden; text-overflow: ellipsis;
     }
 
-    /* ── VIDEO ── */
-    .vid-wrap { width:100%; height:100%; }
+    /* Video slide */
+    .vid-wrap.fs { width: 100%; height: 100%; }
+    .vid-wrap.fs video { width: 100%; height: 100%; object-fit: cover; }
     .vid-wrap.windowed {
-      display:flex; align-items:center; justify-content:center;
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
     }
     .vid-wrap.windowed video {
-      max-width:92vw; max-height:92vh; border-radius:18px;
-      box-shadow:0 24px 72px rgba(0,0,0,.24);
+      max-width: 90vw; max-height: 84vh;
+      border-radius: 16px; box-shadow: 0 24px 72px rgba(0,0,0,0.5);
     }
-    .vid-wrap.fs video { width:100%; height:100%; object-fit:cover; }
 
-    /* ── PROGRESS BAR ── */
+    /* ═══════════════════════════════ SIDEBAR ══════════════════════════════════ */
+    #sidebar {
+      grid-area: sidebar;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 14px 14px 14px 8px;
+      background: rgba(15,23,42,0.55);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid rgba(255,255,255,0.07);
+      overflow: hidden;
+    }
+
+    .widget {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px; padding: 16px;
+      flex-shrink: 0;
+    }
+    .widget-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.38);
+      margin-bottom: 10px;
+    }
+
+    /* ── Weather widget ── */
+    #weather-widget {}
+    .wx-main {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    }
+    .wx-icon { font-size: 42px; line-height: 1; }
+    .wx-right {}
+    .wx-temp {
+      font-size: 32px; font-weight: 700; letter-spacing: -0.03em;
+      color: white; line-height: 1;
+    }
+    .wx-temp sup { font-size: 16px; font-weight: 400; vertical-align: super; }
+    .wx-desc {
+      font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px;
+    }
+    .wx-details {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .wx-detail {
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px; padding: 6px 10px;
+      font-size: 11px; color: rgba(255,255,255,0.55);
+    }
+    .wx-detail span { display: block; font-size: 13px; font-weight: 600; color: white; margin-top: 1px; }
+    .wx-location {
+      font-size: 11px; color: rgba(255,255,255,0.4);
+      margin-top: 8px; display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── Calendar widget ── */
+    #cal-widget {}
+    .cal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .cal-month {
+      font-size: 14px; font-weight: 600; color: white;
+    }
+    .cal-nav {
+      display: flex; gap: 4px;
+    }
+    .cal-nav button {
+      background: rgba(255,255,255,0.10); border: none; color: white;
+      width: 26px; height: 26px; border-radius: 7px;
+      cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .cal-nav button:hover { background: rgba(255,255,255,0.20); }
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 2px; text-align: center;
+    }
+    .cal-dow {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.3); padding: 3px 0;
+    }
+    .cal-day {
+      font-size: 11px; padding: 4px 2px;
+      border-radius: 6px; color: rgba(255,255,255,0.55);
+      cursor: default; transition: background 0.15s;
+    }
+    .cal-day.other { color: rgba(255,255,255,0.18); }
+    .cal-day.today {
+      background: linear-gradient(135deg, var(--blue), var(--violet));
+      color: white; font-weight: 700;
+    }
+    .cal-day:not(.other):not(.today):hover { background: rgba(255,255,255,0.10); }
+
+    /* ── Slide list mini ── */
+    #slide-list-widget { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .slide-items {
+      overflow-y: auto; flex: 1;
+      display: flex; flex-direction: column; gap: 6px;
+      scrollbar-width: none;
+    }
+    .slide-items::-webkit-scrollbar { display: none; }
+    .slide-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 10px;
+      border: 1px solid transparent;
+      transition: all 0.2s; cursor: pointer;
+      background: rgba(255,255,255,0.04);
+    }
+    .slide-item.current {
+      background: rgba(99,102,241,0.22);
+      border-color: rgba(99,102,241,0.40);
+    }
+    .slide-num {
+      font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.3);
+      min-width: 16px; text-align: center;
+    }
+    .slide-item.current .slide-num { color: #a5b4fc; }
+    .slide-type-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-text  { background: #60a5fa; }
+    .dot-image { background: #34d399; }
+    .dot-video { background: #f59e0b; }
+    .slide-label {
+      font-size: 11px; color: rgba(255,255,255,0.55);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      flex: 1;
+    }
+    .slide-item.current .slide-label { color: #e0e7ff; font-weight: 500; }
+
+    /* ═══════════════════════════════ PROGRESS BAR ═════════════════════════════ */
     #prog-wrap {
-      position:fixed; bottom:0; left:0; right:0; height:4px;
-      background:rgba(91,127,255,.12); z-index:10;
+      grid-area: progbar;
+      height: 4px; background: rgba(255,255,255,0.08); position: relative;
     }
     #prog-bar {
-      height:100%;
-      background:linear-gradient(90deg,#5b7fff,#a78bfa,#5b7fff);
-      background-size:200% 100%;
-      animation:shimmer 2s linear infinite;
-      width:0%; border-radius:0 2px 0 0;
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+      background-size: 200% 100%;
+      animation: shimmer 2.5s linear infinite;
+      border-radius: 0 2px 0 0;
     }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-    /* ── COUNTER ── */
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
     #counter {
-      position:fixed; bottom:12px; right:18px;
-      font-size:11px; color:rgba(30,42,74,.38); font-weight:600;
-      z-index:11; letter-spacing:.06em;
+      position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; color: rgba(255,255,255,0.25);
+      letter-spacing: 0.1em; font-weight: 600; z-index: 20;
     }
 
-    /* ── LOADING ── */
+    /* ═══════════════════════════════ LOADER ═══════════════════════════════════ */
     #loader {
-      position:fixed; inset:0;
-      background:linear-gradient(135deg,#eef2ff,#f0f4ff);
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
-      z-index:999;
+      position: fixed; inset: 0; z-index: 999;
+      background: #0f172a;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
     }
-    .ld-icon { font-size:44px; animation:pulse 1.4s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.12);opacity:.8} }
-    .ld-text { font-size:14px; color:#7a87a8; letter-spacing:.04em; }
+    .ld-ring {
+      width: 56px; height: 56px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ld-text { font-size: 14px; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; }
+    #loader.hidden { opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
   </style>
 </head>
 <body>
 
+<div id="bg-canvas">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
 <div id="loader">
-  <div class="ld-icon">📋</div>
+  <div class="ld-ring"></div>
   <div class="ld-text">Loading bulletin board…</div>
 </div>
 
-<div id="show"></div>
-<div id="prog-wrap"><div id="prog-bar"></div></div>
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="tb-brand">
+      <div class="tb-icon">📋</div>
+      <div class="tb-name">Bulletin Board</div>
+    </div>
+    <div class="tb-right">
+      <div id="clock-display">
+        <div id="clock-time">--:--</div>
+        <div id="clock-date">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN SLIDESHOW -->
+  <div id="slideshow"></div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <!-- Weather -->
+    <div class="widget" id="weather-widget">
+      <div class="widget-title">📍 Weather</div>
+      <div id="wx-body">
+        <div style="color:rgba(255,255,255,0.3);font-size:12px;">Detecting location…</div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="widget" id="cal-widget">
+      <div class="widget-title">📅 Calendar</div>
+      <div class="cal-header">
+        <div class="cal-month" id="cal-month-label">—</div>
+        <div class="cal-nav">
+          <button onclick="calNav(-1)">‹</button>
+          <button onclick="calNav(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <!-- Slide List -->
+    <div class="widget" id="slide-list-widget">
+      <div class="widget-title">🗂 Slides</div>
+      <div class="slide-items" id="slide-items"></div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="prog-wrap"><div id="prog-bar"></div></div>
+</div>
+
 <div id="counter"></div>
 
 <script type="module">
@@ -148,47 +438,210 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
-// ─────────────────────────────────────────────────────────────────────────────
 
-let slides = [];
-let cur = 0;
-let slideTimer = null;
-let isRunning = false;
+// ════════════════════════════════════════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════════════════════════════════════════
+function updateClock() {
+  const now  = new Date();
+  const h    = String(now.getHours()).padStart(2,'0');
+  const m    = String(now.getMinutes()).padStart(2,'0');
+  const s    = String(now.getSeconds()).padStart(2,'0');
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clock-time').textContent = `${h}:${m}:${s}`;
+  document.getElementById('clock-date').textContent =
+    `${days[now.getDay()]}, ${mons[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
 
-// ── FIREBASE LISTENER ────────────────────────────────────────────────────────
-// BUG FIX: Previously, every DB update called buildSlideDOM() which wiped
-// container.innerHTML — destroying all slide elements mid-rotation. Then
-// goToSlide() would call getElementById('sl-'+cur) and get null, crashing
-// silently. Also, the `started` flag never reset, so after the first load,
-// DB updates rebuilt the DOM but never called goToSlide() again — slideshow
-// froze on whatever was showing.
+// ════════════════════════════════════════════════════════════════════════════
+//  CALENDAR
+// ════════════════════════════════════════════════════════════════════════════
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+const today = new Date();
+
+window.calNav = function(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+};
+
+function renderCalendar() {
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  document.getElementById('cal-month-label').textContent =
+    `${MONTHS[calMonth]} ${calYear}`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Day-of-week headers
+  DAYS.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow'; el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+
+  // Prev month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const el = document.createElement('div');
+    el.className = 'cal-day other';
+    el.textContent = prevMonthDays - i;
+    grid.appendChild(el);
+  }
+
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    const isToday = (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear());
+    if (isToday) el.classList.add('today');
+    el.textContent = d;
+    grid.appendChild(el);
+  }
+
+  // Next month padding
+  const total = firstDay + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= remaining; d++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day other'; el.textContent = d;
+    grid.appendChild(el);
+  }
+}
+
+renderCalendar();
+
+// ════════════════════════════════════════════════════════════════════════════
+//  WEATHER (Open-Meteo — no API key needed)
+// ════════════════════════════════════════════════════════════════════════════
+const WX_CODES = {
+  0:'Clear Sky',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',
+  45:'Foggy',48:'Icy Fog',
+  51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',
+  61:'Light Rain',63:'Rain',65:'Heavy Rain',
+  71:'Light Snow',73:'Snow',75:'Heavy Snow',77:'Snow Grains',
+  80:'Showers',81:'Heavy Showers',82:'Violent Showers',
+  85:'Snow Showers',86:'Heavy Snow Showers',
+  95:'Thunderstorm',96:'Thunderstorm w/ Hail',99:'Thunderstorm w/ Heavy Hail'
+};
+
+const WX_ICONS = {
+  0:'☀️',1:'🌤',2:'⛅',3:'☁️',
+  45:'🌫',48:'🌫',
+  51:'🌦',53:'🌧',55:'🌧',
+  61:'🌦',63:'🌧',65:'🌧',
+  71:'🌨',73:'❄️',75:'❄️',77:'❄️',
+  80:'🌦',81:'🌧',82:'⛈',
+  85:'🌨',86:'❄️',
+  95:'⛈',96:'⛈',99:'⛈'
+};
+
+async function loadWeather(lat, lon, locationName) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+      + `&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,relative_humidity_2m`
+      + `&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const c = data.current;
+    const code = c.weathercode;
+
+    const icon = WX_ICONS[code] || '🌡';
+    const desc = WX_CODES[code] || 'Unknown';
+
+    document.getElementById('wx-body').innerHTML = `
+      <div class="wx-main">
+        <div class="wx-icon">${icon}</div>
+        <div class="wx-right">
+          <div class="wx-temp">${Math.round(c.temperature_2m)}<sup>°C</sup></div>
+          <div class="wx-desc">${desc}</div>
+        </div>
+      </div>
+      <div class="wx-details">
+        <div class="wx-detail">Feels like<span>${Math.round(c.apparent_temperature)}°C</span></div>
+        <div class="wx-detail">Humidity<span>${c.relative_humidity_2m}%</span></div>
+        <div class="wx-detail">Wind<span>${Math.round(c.windspeed_10m)} km/h</span></div>
+        <div class="wx-detail">Condition<span>${icon}</span></div>
+      </div>
+      <div class="wx-location">📍 ${locationName}</div>
+    `;
+  } catch(e) {
+    document.getElementById('wx-body').innerHTML =
+      `<div style="color:rgba(255,255,255,0.3);font-size:11px;">Weather unavailable</div>`;
+  }
+}
+
+// Try to get user location; fall back to Cebu City, PH
+function initWeather() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        // Reverse geocode with Open-Meteo nominatim doesn't exist, use coords label
+        loadWeather(lat, lon, `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E`);
+      },
+      () => {
+        // Fallback: Cebu City, Philippines
+        loadWeather(10.3157, 123.8854, 'Cebu City, PH');
+      },
+      { timeout: 6000 }
+    );
+  } else {
+    loadWeather(10.3157, 123.8854, 'Cebu City, PH');
+  }
+}
+initWeather();
+// Refresh weather every 10 minutes
+setInterval(initWeather, 10 * 60 * 1000);
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SLIDESHOW
+// ════════════════════════════════════════════════════════════════════════════
+let slides = [], cur = 0, slideTimer = null, started = false;
+
+function safe(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s || '');
+  return d.innerHTML;
+}
+
 onValue(ref(db,'posts'), snap => {
   slides = [];
   if (snap.exists()) snap.forEach(c => slides.push(c.val()));
-  document.getElementById('loader').style.display = 'none';
-
-  // Stop any running timer before rebuilding DOM
-  clearTimeout(slideTimer);
-  slideTimer = null;
-  isRunning = false;
-
+  document.getElementById('loader').classList.add('hidden');
   buildSlideDOM();
+  renderSlideList();
 
-  if (slides.length > 0) {
-    // Always restart from slide 0 after any DB change (new post, edit, delete)
-    // This is safe because we cleared the timer above
+  if (!started) {
+    started = true;
     goToSlide(0);
   }
+  if (cur >= slides.length) goToSlide(0);
 });
 
 function buildSlideDOM() {
-  const container = document.getElementById('show');
+  const container = document.getElementById('slideshow');
   container.innerHTML = '';
 
   if (!slides.length) {
-    container.innerHTML = `<div style="display:flex;height:100vh;align-items:center;
-      justify-content:center;font-size:18px;color:#7a87a8">
-      No posts yet. Add some from the Admin Panel.</div>`;
+    container.innerHTML = `
+      <div style="display:flex;flex-direction:column;height:100%;align-items:center;
+        justify-content:center;gap:12px;color:rgba(255,255,255,0.3);">
+        <div style="font-size:48px">📭</div>
+        <div style="font-size:16px">No posts yet. Add some from the Admin Panel.</div>
+      </div>`;
     return;
   }
 
@@ -206,13 +659,10 @@ function buildSlideDOM() {
         </div>`;
 
     } else if (item.type === 'image') {
-      // BUG FIX: image type was completely missing in the original app.js
-      // Also handle both imageUrl and url fields since admin saves both
-      const src = item.imageUrl || item.url || '';
       const fsClass = item.fullscreen ? 'fs' : '';
       slide.innerHTML = `
         <div class="img-wrap ${fsClass}">
-          <img src="${safe(src)}" alt="${safe(item.title)}"
+          <img src="${safe(item.imageUrl || item.url)}" alt="${safe(item.title)}"
                onerror="this.style.display='none'">
           ${item.category ? `<div class="img-cat">${safe(item.category)}</div>` : ''}
           ${item.title    ? `<div class="img-caption">${safe(item.title)}</div>` : ''}
@@ -222,7 +672,7 @@ function buildSlideDOM() {
       const cls = item.fullscreen ? 'fs' : 'windowed';
       slide.innerHTML = `
         <div class="vid-wrap ${cls}">
-          <video autoplay muted playsinline loop preload="auto">
+          <video autoplay muted playsinline preload="auto">
             <source src="${safe(item.url)}" type="video/mp4">
           </video>
         </div>`;
@@ -232,54 +682,64 @@ function buildSlideDOM() {
   });
 }
 
+function renderSlideList() {
+  const list = document.getElementById('slide-items');
+  list.innerHTML = '';
+  slides.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'slide-item' + (i === cur ? ' current' : '');
+    el.id = 'sli-' + i;
+    el.onclick = () => { clearTimeout(slideTimer); goToSlide(i); };
+    const dotClass = item.type === 'video' ? 'dot-video' : item.type === 'image' ? 'dot-image' : 'dot-text';
+    el.innerHTML = `
+      <span class="slide-num">${i+1}</span>
+      <span class="slide-type-dot ${dotClass}"></span>
+      <span class="slide-label">${safe(item.title || item.type || 'Slide')}</span>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function updateSlideListHighlight() {
+  document.querySelectorAll('.slide-item').forEach((el, i) => {
+    el.classList.toggle('current', i === cur);
+  });
+  // Scroll into view
+  const active = document.getElementById('sli-' + cur);
+  if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
 function goToSlide(idx) {
   if (!slides.length) return;
-
-  // Clamp to valid range
   cur = ((idx % slides.length) + slides.length) % slides.length;
 
-  // Hide all slides, show current
   document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('sl-' + cur);
-  if (!el) {
-    // Slide element missing (shouldn't happen after fix, but safety guard)
-    console.warn('Slide element not found for index', cur);
-    return;
-  }
+  if (!el) return;
   el.classList.add('active');
 
-  // Auto-play video if present
+  // Autoplay video
   const vid = el.querySelector('video');
-  if (vid) vid.play().catch(() => {});
+  if (vid) { vid.currentTime = 0; vid.play().catch(() => {}); }
 
-  // Update counter
+  // Counter
   document.getElementById('counter').textContent = `${cur + 1} / ${slides.length}`;
 
-  // Animate progress bar
-  // BUG FIX: double rAF was fragile on rapid DB updates — replaced with
-  // a simple setTimeout(0) which is more reliable for forcing a reflow
+  // Progress bar
   const dur = Number(slides[cur]?.duration) || 5000;
   const bar = document.getElementById('prog-bar');
   bar.style.transition = 'none';
   bar.style.width = '0%';
-  setTimeout(() => {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     bar.style.transition = `width ${dur}ms linear`;
     bar.style.width = '100%';
-  }, 30);
+  }));
 
-  // Schedule next slide — always clear old timer first to prevent stacking
+  // Update slide list highlight
+  updateSlideListHighlight();
+
   clearTimeout(slideTimer);
-  isRunning = true;
-  slideTimer = setTimeout(() => {
-    if (isRunning) goToSlide(cur + 1);
-  }, dur);
-}
-
-// Safe HTML escape
-function safe(s) {
-  const d = document.createElement('div');
-  d.textContent = String(s || '');
-  return d.innerHTML;
+  slideTimer = setTimeout(() => goToSlide(cur + 1), dur);
 }
 </script>
 </body>
