@@ -3,321 +3,255 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel — Bulletin Board</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <title>Bulletin Board Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    :root {
-      --bg:#eef2ff; --surface:#fff; --s2:#f7f9ff;
-      --primary:#5b7fff; --pl:#dce5ff; --pd:#3a5ce4;
-      --text:#1e2a4a; --muted:#7a87a8; --border:#e2e8f8;
-      --ok:#22c55e; --ok-bg:#dcfce7;
-      --err:#ef4444; --err-bg:#fee2e2;
-      --warn:#f59e0b; --warn-bg:#fef3c7;
-      --r:12px;
-    }
-    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; min-height: 100%; font-family: 'Outfit', sans-serif; background: #f0f2f8; color: #0f172a; }
 
-    /* ── NAVBAR ── */
-    .nav {
-      position:sticky; top:0; z-index:100;
-      background:var(--surface); border-bottom:1px solid var(--border);
-      height:62px; display:flex; align-items:center; justify-content:space-between;
-      padding:0 30px; box-shadow:0 1px 12px rgba(91,127,255,.09);
+    /* ── TOPBAR ── */
+    #topbar {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center;
+      padding: 0 28px; height: 62px;
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
-    .nav-brand { display:flex; align-items:center; gap:11px; }
-    .nav-icon {
-      font-size:20px; background:var(--pl);
-      width:38px; height:38px; display:inline-flex;
-      align-items:center; justify-content:center; border-radius:11px;
+    .tb-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 18px; font-weight: 700; color: #0f172a;
     }
-    .nav-title { font-family:'Playfair Display',serif; font-size:18px; color:var(--text); }
-    .nav-right { display:flex; align-items:center; gap:14px; }
-    .nav-email { font-size:12px; color:var(--muted); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-    /* Bell */
-    .bell-wrap { position:relative; }
-    .bell-btn {
-      background:var(--pl); border:none; border-radius:11px;
-      width:40px; height:40px; font-size:18px; cursor:pointer;
-      display:flex; align-items:center; justify-content:center; transition:.18s;
+    .tb-brand-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
     }
-    .bell-btn:hover { background:#c7d4ff; }
-    .notif-badge {
-      display:none; position:absolute; top:2px; right:2px;
-      background:var(--err); color:#fff; border-radius:99px;
-      font-size:9px; font-weight:800; min-width:16px; height:16px;
-      align-items:center; justify-content:center; padding:0 4px; line-height:1;
+    .tb-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .tb-email {
+      font-size: 13px; color: #64748b;
     }
 
-    .btn-logout {
-      padding:8px 16px; background:transparent; color:var(--muted);
-      border:1.5px solid var(--border); border-radius:9px;
-      font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
-      cursor:pointer; transition:.18s;
+    /* Display button in topbar */
+    .btn-display-top {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 18px; border-radius: 9px;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: #fff; font-family: 'Outfit', sans-serif;
+      font-size: 13px; font-weight: 600;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: opacity 0.18s, transform 0.18s;
+      box-shadow: 0 3px 12px rgba(99,102,241,0.35);
     }
-    .btn-logout:hover { border-color:var(--err); color:var(--err); }
+    .btn-display-top:hover  { opacity: 0.88; transform: translateY(-1px); }
+    .btn-display-top:active { transform: scale(0.97); }
 
-    /* ── NOTIFICATION DRAWER ── */
-    .notif-drawer {
-      position:fixed; top:62px; right:-380px; width:360px;
-      height:calc(100vh - 62px); background:var(--surface);
-      border-left:1px solid var(--border);
-      box-shadow:-8px 0 32px rgba(0,0,0,.08);
-      z-index:300; overflow-y:auto; transition:right .28s ease;
+    .btn-signout {
+      padding: 8px 16px; border-radius: 9px;
+      background: #fff; border: 1px solid #e2e8f0;
+      color: #64748b; font-family: 'Outfit', sans-serif;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: background 0.18s, color 0.18s;
     }
-    .notif-drawer.open { right:0; }
-    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.20); z-index:200; }
-    .overlay.open { display:block; }
-    .drawer-head {
-      position:sticky; top:0; background:var(--surface);
-      padding:20px 20px 16px; border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    .drawer-head h3 { font-size:15px; font-weight:700; display:flex; align-items:center; gap:7px; }
-    .close-drawer {
-      background:none; border:none; font-size:17px; color:var(--muted);
-      cursor:pointer; width:30px; height:30px; border-radius:7px;
-      display:flex; align-items:center; justify-content:center; transition:.18s;
-    }
-    .close-drawer:hover { background:var(--bg); color:var(--text); }
+    .btn-signout:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
 
-    .req-card { padding:16px 20px; border-bottom:1px solid var(--border); animation:fi .25s ease; }
-    .req-name  { font-weight:700; font-size:14px; color:var(--text); margin-bottom:2px; }
-    .req-email { font-size:12px; color:var(--muted); margin-bottom:8px; }
-    .req-reason {
-      font-size:12px; color:var(--text);
-      background:var(--s2); padding:8px 12px; border-radius:9px;
-      border-left:3px solid var(--primary); margin-bottom:12px; line-height:1.5;
+    /* ── LAYOUT ── */
+    #main {
+      max-width: 1100px; margin: 0 auto;
+      padding: 32px 28px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 28px;
+      align-items: start;
     }
-    .req-actions { display:flex; gap:8px; }
-    .btn-approve {
-      flex:1; padding:8px; background:var(--ok-bg); color:var(--ok);
-      border:1.5px solid #86efac; border-radius:8px;
-      font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700;
-      cursor:pointer; transition:.18s;
-    }
-    .btn-approve:hover { background:var(--ok); color:#fff; border-color:var(--ok); }
-    .btn-reject {
-      flex:1; padding:8px; background:var(--err-bg); color:var(--err);
-      border:1.5px solid #fca5a5; border-radius:8px;
-      font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700;
-      cursor:pointer; transition:.18s;
-    }
-    .btn-reject:hover { background:var(--err); color:#fff; border-color:var(--err); }
-    .empty-drawer { text-align:center; padding:48px 20px; color:var(--muted); font-size:14px; }
 
-    /* ── MAIN LAYOUT ── */
-    .layout {
-      display:grid; grid-template-columns:420px 1fr;
-      gap:24px; padding:26px 30px;
-      max-width:1240px; margin:0 auto;
+    /* ── CARD ── */
+    .card {
+      background: #fff; border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
-    @media(max-width:900px){ .layout{grid-template-columns:1fr;} }
 
-    /* ── FORM CARD ── */
-    .form-card {
-      background:var(--surface); border-radius:20px; padding:26px;
-      border:1px solid var(--border); box-shadow:0 2px 18px rgba(91,127,255,.08);
-      height:fit-content; position:sticky; top:78px;
-    }
+    /* ── FORM ── */
     .card-title {
-      font-family:'Playfair Display',serif; font-size:19px;
-      margin-bottom:20px; display:flex; align-items:center; gap:9px;
+      font-size: 17px; font-weight: 700; color: #0f172a;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
     }
-    .chip {
-      font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700;
-      padding:3px 11px; border-radius:99px;
-      background:var(--pl); color:var(--primary);
-    }
-    .chip.edit { background:var(--warn-bg); color:var(--warn); }
-
-    .fg { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
-    .full { grid-column:1/-1; }
-    .field label {
-      display:block; font-size:10px; font-weight:700;
-      color:var(--muted); text-transform:uppercase;
-      letter-spacing:.07em; margin-bottom:6px;
-    }
-    .field input, .field textarea, .field select {
-      width:100%; padding:10px 12px;
-      border:1.5px solid var(--border); border-radius:var(--r);
-      font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text);
-      background:var(--s2); outline:none; transition:.18s; appearance:none;
-    }
-    .field textarea { min-height:82px; resize:vertical; }
-    .field input:focus, .field textarea:focus, .field select:focus {
-      border-color:var(--primary);
-      box-shadow:0 0 0 3px rgba(91,127,255,.11); background:#fff;
+    .badge-create {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 99px;
+      background: #ede9fe; color: #6d28d9;
     }
 
-    /* Upload */
-    .upload-zone {
-      border:2px dashed var(--border); border-radius:var(--r);
-      padding:20px 14px; text-align:center; cursor:pointer;
-      transition:.18s; background:var(--s2); position:relative; overflow:hidden;
+    label.field-label {
+      display: block; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      color: #64748b; margin-bottom: 6px; margin-top: 16px;
     }
-    .upload-zone:hover, .upload-zone.over { border-color:var(--primary); background:var(--pl); }
-    .upload-zone input[type=file] {
-      position:absolute; inset:0; opacity:0; cursor:pointer;
-      width:100%; height:100%;
-    }
-    .upload-icon { font-size:30px; margin-bottom:7px; }
-    .upload-hint { font-size:12px; color:var(--muted); line-height:1.5; }
-    .preview-img {
-      display:none; margin-top:10px;
-      width:100%; max-height:130px; object-fit:cover;
-      border-radius:9px; border:1.5px solid var(--border);
-    }
-    .prog-wrap { display:none; margin-top:9px; height:5px; background:var(--border); border-radius:99px; overflow:hidden; }
-    .prog-bar  { height:100%; background:var(--primary); border-radius:99px; width:0%; transition:width .2s; }
-    .upload-status { font-size:11px; color:var(--primary); margin-top:5px; display:none; text-align:center; }
+    label.field-label:first-of-type { margin-top: 0; }
+    label.required::after { content: ' *'; color: #ef4444; }
 
-    /* Checkbox */
-    .cb-row { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; font-size:13px; color:var(--text); }
-    .cb-row input[type=checkbox] { display:none; }
-    .cb-box {
-      width:20px; height:20px; border:2px solid var(--border); border-radius:6px;
-      background:var(--s2); display:flex; align-items:center; justify-content:center;
-      transition:.18s; flex-shrink:0;
+    input[type=text], input[type=number], input[type=url],
+    textarea, select {
+      width: 100%; padding: 10px 13px;
+      border: 1px solid #e2e8f0; border-radius: 9px;
+      font-family: 'Outfit', sans-serif; font-size: 14px;
+      color: #0f172a; background: #f8fafc;
+      outline: none; transition: border-color 0.18s, background 0.18s;
+      resize: vertical;
     }
-    .cb-row input:checked ~ .cb-box { background:var(--primary); border-color:var(--primary); }
-    .cb-row input:checked ~ .cb-box::after { content:'✓'; color:#fff; font-size:12px; font-weight:700; }
+    input:focus, textarea:focus, select:focus {
+      border-color: #6366f1; background: #fff;
+    }
+    textarea { min-height: 90px; }
 
-    .form-btns { display:flex; gap:10px; margin-top:20px; }
-    .btn-save {
-      flex:1; padding:12px; background:var(--primary); color:#fff; border:none;
-      border-radius:var(--r); font-family:'DM Sans',sans-serif;
-      font-size:14px; font-weight:700; cursor:pointer; transition:.18s;
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .checkbox-row {
+      display: flex; align-items: center; gap: 9px;
+      margin-top: 16px; cursor: pointer; user-select: none;
     }
-    .btn-save:hover { background:var(--pd); }
-    .btn-save:active { transform:scale(.98); }
-    .btn-save:disabled { opacity:.6; cursor:not-allowed; }
+    .checkbox-row input[type=checkbox] {
+      width: 16px; height: 16px; cursor: pointer;
+      accent-color: #6366f1;
+    }
+    .checkbox-label { font-size: 13px; color: #475569; font-weight: 500; }
+
+    /* Image upload area */
+    #drop-zone {
+      margin-top: 10px;
+      border: 2px dashed #cbd5e1; border-radius: 11px;
+      padding: 22px; text-align: center;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      background: #f8fafc;
+    }
+    #drop-zone:hover, #drop-zone.drag { border-color: #6366f1; background: #eef2ff; }
+    #drop-zone .dz-icon { font-size: 28px; margin-bottom: 6px; }
+    #drop-zone .dz-text { font-size: 13px; color: #64748b; }
+    #drop-zone .dz-sub  { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+    #file-input { display: none; }
+    #preview-wrap { margin-top: 10px; display: none; }
+    #preview-img  { max-width: 100%; border-radius: 8px; max-height: 140px; object-fit: contain; }
+    #preview-name { font-size: 12px; color: #64748b; margin-top: 5px; }
+    #upload-progress {
+      margin-top: 8px; height: 5px;
+      background: #e2e8f0; border-radius: 99px; overflow: hidden; display: none;
+    }
+    #upload-bar {
+      height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      width: 0%; transition: width 0.3s ease; border-radius: 99px;
+    }
+
+    /* Form actions */
+    .form-actions {
+      display: flex; gap: 10px; margin-top: 22px;
+    }
     .btn-clear {
-      padding:12px 18px; background:transparent; color:var(--muted);
-      border:1.5px solid var(--border); border-radius:var(--r);
-      font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500;
-      cursor:pointer; transition:.18s;
+      padding: 11px 20px; border-radius: 10px;
+      background: #fff; border: 1px solid #e2e8f0;
+      color: #64748b; font-family: 'Outfit', sans-serif;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      transition: background 0.18s;
     }
-    .btn-clear:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-clear:hover { background: #f1f5f9; }
+    .btn-save {
+      flex: 1; padding: 11px 20px; border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; color: #fff;
+      font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.18s, transform 0.18s;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn-save:hover  { opacity: 0.9; transform: translateY(-1px); }
+    .btn-save:active { transform: scale(0.98); }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    /* ── POSTS PANEL ── */
-    .posts-head {
-      font-family:'Playfair Display',serif; font-size:19px;
-      margin-bottom:18px; display:flex; align-items:center; gap:10px;
+    /* ── POSTS LIST ── */
+    .posts-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
     }
-    .post-cnt {
-      font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700;
-      padding:3px 12px; border-radius:99px; background:var(--pl); color:var(--primary);
+    .posts-title { font-size: 17px; font-weight: 700; color: #0f172a; }
+    .posts-count {
+      font-size: 12px; font-weight: 700; padding: 2px 10px;
+      border-radius: 99px; background: #e0e7ff; color: #3730a3;
     }
-    .posts-list { display:flex; flex-direction:column; gap:13px; }
-    .post-card {
-      background:var(--surface); border-radius:16px; padding:17px 19px;
-      border:1px solid var(--border); box-shadow:0 2px 12px rgba(91,127,255,.07);
-      display:flex; gap:14px; align-items:flex-start; animation:fi .28s ease; transition:.18s;
+
+    .post-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-radius: 12px;
+      border: 1px solid #e2e8f0; background: #fafafa;
+      margin-bottom: 10px; transition: box-shadow 0.18s;
     }
-    .post-card:hover { box-shadow:0 5px 24px rgba(91,127,255,.14); transform:translateY(-1px); }
-    .thumb {
-      width:74px; height:58px; border-radius:9px; flex-shrink:0;
-      border:1px solid var(--border); background:var(--s2);
-      display:flex; align-items:center; justify-content:center;
-      font-size:26px; overflow:hidden;
+    .post-item:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); background: #fff; }
+
+    .post-thumb {
+      width: 64px; height: 48px; border-radius: 8px;
+      object-fit: cover; background: #e2e8f0; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; overflow: hidden;
     }
-    .thumb img { width:100%; height:100%; object-fit:cover; }
-    .post-body { flex:1; min-width:0; }
-    .post-tags { display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap; }
-    .tag {
-      font-size:10px; font-weight:700; padding:2px 10px;
-      border-radius:99px; letter-spacing:.04em;
+    .post-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .post-info { flex: 1; min-width: 0; }
+    .post-meta {
+      display: flex; align-items: center; gap: 7px; margin-bottom: 4px;
     }
-    .tag.text  { background:var(--pl); color:var(--primary); }
-    .tag.video { background:var(--warn-bg); color:var(--warn); }
-    .tag.image { background:#f0fdf4; color:#16a34a; }
-    .tag.cat   { background:var(--s2); color:var(--muted); }
-    .post-title { font-size:14px; font-weight:700; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .post-meta  { font-size:11px; color:var(--muted); }
-    .post-btns  { display:flex; gap:7px; flex-direction:column; flex-shrink:0; }
+    .post-type-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .type-text  { background: #dbeafe; color: #1e40af; }
+    .type-image { background: #dcfce7; color: #166534; }
+    .type-video { background: #fce7f3; color: #9d174d; }
+
+    .post-cat  { font-size: 11px; color: #94a3b8; font-weight: 500; }
+    .post-name { font-size: 14px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .post-dur  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    .post-actions { display: flex; gap: 7px; flex-shrink: 0; }
     .btn-edit {
-      padding:7px 14px; background:var(--pl); color:var(--primary); border:none;
-      border-radius:8px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; cursor:pointer; transition:.18s;
+      padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      border: 1px solid #c7d2fe; background: #eef2ff; color: #4f46e5;
+      cursor: pointer; transition: background 0.18s;
     }
-    .btn-edit:hover { background:var(--primary); color:#fff; }
-    .btn-del {
-      padding:7px 14px; background:var(--err-bg); color:var(--err); border:none;
-      border-radius:8px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; cursor:pointer; transition:.18s;
+    .btn-edit:hover { background: #e0e7ff; }
+    .btn-delete {
+      padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      border: 1px solid #fecaca; background: #fff1f2; color: #dc2626;
+      cursor: pointer; transition: background 0.18s;
     }
-    .btn-del:hover { background:var(--err); color:#fff; }
-    .no-posts { text-align:center; padding:52px 20px; color:var(--muted); font-size:14px; }
+    .btn-delete:hover { background: #fee2e2; }
 
-    /* ── AUTH SPLASH ── */
-    #auth-check {
-      position:fixed; inset:0; background:var(--bg);
-      display:flex; align-items:center; justify-content:center;
-      flex-direction:column; gap:14px; z-index:999;
+    .empty-state {
+      text-align: center; padding: 48px 24px; color: #94a3b8;
     }
-    .spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; }
-    @keyframes spin { to{transform:rotate(360deg)} }
+    .empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state .es-text { font-size: 14px; }
 
-    @keyframes fi { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: #0f172a; color: #fff; padding: 12px 24px; border-radius: 99px;
+      font-size: 13px; font-weight: 500; z-index: 999;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 0; pointer-events: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.success { background: #166534; }
+    #toast.error   { background: #991b1b; }
   </style>
 </head>
 <body>
 
-<!-- AUTH CHECK SPLASH -->
-<div id="auth-check">
-  <div class="spinner"></div>
-  <div style="font-size:14px;color:var(--muted)">Verifying access...</div>
-</div>
-
-<!-- PAGE (hidden until auth confirmed) -->
-<div id="page" style="display:none">
-
-<!-- NAVBAR -->
-<nav class="nav">
-  <div class="nav-brand">
-    <span class="nav-icon">📋</span>
-    <span class="nav-title">Bulletin Board Admin</span>
-  </div>
-  <div class="nav-right">
-    <span class="nav-email" id="nav-email">—</span>
-    <div class="bell-wrap">
-      <button class="bell-btn" onclick="toggleDrawer()" title="Access Requests">🔔</button>
-      <span class="notif-badge" id="notif-badge"></span>
-    </div>
-    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
-  </div>
-</nav>
-
-<!-- NOTIFICATION DRAWER -->
-<div class="notif-drawer" id="notif-drawer">
-  <div class="drawer-head">
-    <h3>🔔 Access Requests</h3>
-    <button class="close-drawer" onclick="toggleDrawer()">✕</button>
-  </div>
-  <div id="req-list"><p class="empty-drawer">No pending requests.</p></div>
-</div>
-<div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
-
-<!-- LAYOUT -->
-<div class="layout">
-
-  <!-- FORM -->
-  <section class="form-card">
-    <div class="card-title">
-      <span id="form-title">New Post</span>
-      <span class="chip" id="form-chip">Create</span>
-    </div>
-
-    <div class="fg">
-      <div class="field full">
-        <label>Title *</label>
-        <input id="f-title" placeholder="Enter post title...">
-      </div>
-      <div class="field full">
-        <label>Content / Description</label>
-        <textarea id="f-content" placeholder="Write your announcement or description..."></textarea>
-      </div>
-     <!-- TOP BAR -->
+<!-- TOP BAR -->
 <div id="topbar">
   <div class="tb-brand">
     <div class="tb-brand-icon">📋</div>
@@ -332,392 +266,331 @@
     <button class="btn-signout" id="signout-btn">Sign Out</button>
   </div>
 </div>
-      <div class="field">
-        <label>Post Type</label>
+
+<!-- MAIN CONTENT -->
+<div id="main">
+
+  <!-- LEFT: New Post Form -->
+  <div class="card">
+    <div class="card-title">
+      New Post <span class="badge-create" id="form-mode-badge">Create</span>
+    </div>
+
+    <label class="field-label required">Title</label>
+    <input type="text" id="f-title" placeholder="Enter post title…">
+
+    <label class="field-label">Content / Description</label>
+    <textarea id="f-content" placeholder="Write your announcement or description…"></textarea>
+
+    <div class="row-2">
+      <div>
+        <label class="field-label">Post Type</label>
         <select id="f-type" onchange="onTypeChange()">
           <option value="text">📝 Text Only</option>
-          <option value="image">🖼️ Image</option>
-          <option value="video">🎥 Video URL</option>
+          <option value="image">🖼 Image</option>
+          <option value="video">🎬 Video</option>
         </select>
       </div>
-      <div class="field">
-        <label>Category</label>
-        <input id="f-cat" placeholder="e.g. Announcement">
-      </div>
-      <div class="field">
-        <label>Duration on screen (ms)</label>
-        <input id="f-dur" type="number" placeholder="5000" min="1000" step="500">
-      </div>
-
-      <!-- IMAGE UPLOAD -->
-      <div class="field full" id="grp-image" style="display:none">
-        <label>Upload Image</label>
-        <div class="upload-zone" id="upload-zone">
-          <input type="file" id="img-input" accept="image/*" onchange="onFileSelect(event)">
-          <div id="upload-placeholder">
-            <div class="upload-icon">🖼️</div>
-            <div class="upload-hint">Click or drag & drop<br><small>JPG, PNG, GIF, WebP — max 10 MB</small></div>
-          </div>
-          <img class="preview-img" id="preview-img" alt="preview">
-        </div>
-        <div class="prog-wrap" id="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
-        <div class="upload-status" id="upload-status">⏳ Uploading...</div>
-        <input type="hidden" id="f-imageUrl">
-      </div>
-
-      <!-- VIDEO URL -->
-      <div class="field full" id="grp-video" style="display:none">
-        <label>Video URL (.mp4)</label>
-        <input id="f-videoUrl" placeholder="https://example.com/video.mp4">
-      </div>
-
-      <!-- FULLSCREEN CHECKBOX -->
-      <div class="field full">
-        <label class="cb-row">
-          <input type="checkbox" id="f-fullscreen">
-          <span class="cb-box"></span>
-          Fullscreen (fills entire display)
-        </label>
+      <div>
+        <label class="field-label">Category</label>
+        <input type="text" id="f-cat" placeholder="e.g. Announcement">
       </div>
     </div>
 
-    <div class="form-btns">
+    <label class="field-label">Duration on Screen (ms)</label>
+    <input type="number" id="f-dur" value="5000" min="500" step="500">
+
+    <!-- Image upload (shown for image type) -->
+    <div id="img-section" style="display:none;">
+      <label class="field-label">Image</label>
+      <div id="drop-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event)">
+        <div class="dz-icon">🖼</div>
+        <div class="dz-text">Click to upload or drag & drop</div>
+        <div class="dz-sub">PNG, JPG, GIF up to 10MB</div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" onchange="handleFile(this.files[0])">
+      <div id="upload-progress"><div id="upload-bar"></div></div>
+      <div id="preview-wrap">
+        <img id="preview-img" src="" alt="Preview">
+        <div id="preview-name"></div>
+      </div>
+      <label class="field-label" style="margin-top:14px;">Or paste image URL</label>
+      <input type="url" id="f-imgurl" placeholder="https://…">
+    </div>
+
+    <!-- Video URL (shown for video type) -->
+    <div id="vid-section" style="display:none;">
+      <label class="field-label">Video URL (MP4)</label>
+      <input type="url" id="f-vidurl" placeholder="https://…/video.mp4">
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="f-fs">
+      <span class="checkbox-label">Fullscreen (fills entire display)</span>
+    </label>
+
+    <div class="form-actions">
       <button class="btn-clear" onclick="clearForm()">Clear</button>
-      <button class="btn-save" id="btn-save" onclick="savePost()">
-        <span id="save-label">💾 Save Post</span>
+      <button class="btn-save" id="save-btn" onclick="savePost()">
+        💾 Save Post
       </button>
     </div>
-  </section>
+  </div>
 
-  <!-- POSTS -->
-  <section>
-    <div class="posts-head">
-      All Posts <span class="post-cnt" id="post-cnt">0</span>
+  <!-- RIGHT: All Posts -->
+  <div class="card">
+    <div class="posts-header">
+      <span class="posts-title">All Posts</span>
+      <span class="posts-count" id="posts-count">0</span>
     </div>
-    <div class="posts-list" id="posts-list">
-      <div class="no-posts">No posts yet — create one! 👈</div>
+    <div id="posts-list">
+      <div class="empty-state">
+        <div class="es-icon">📭</div>
+        <div class="es-text">No posts yet. Create one!</div>
+      </div>
     </div>
-  </section>
+  </div>
 
-</div><!-- /layout -->
-</div><!-- /page -->
+</div>
+
+<div id="toast"></div>
 
 <script type="module">
-import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, push, onValue, remove, update, get }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-// ── CLOUDINARY CONFIG (free — no credit card needed) ─────────────────────────
-// 1. Sign up free at https://cloudinary.com
-// 2. Dashboard → Settings → Upload → Add upload preset → set "Signing Mode" to UNSIGNED
-// 3. Paste your Cloud Name and Preset Name below
-const CLOUDINARY_CLOUD  = "dmzmkkhao";   // e.g. "abc123xyz"
-const CLOUDINARY_PRESET = "lckingcg"; // e.g. "bulletin_board_unsigned"
-// ─────────────────────────────────────────────────────────────────────────────
+                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, push, set, remove, onValue, update }
+                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL }
+                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-// ── YOUR FIREBASE CONFIG ──────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
   authDomain:        "digitalbulletinboard-54f06.firebaseapp.com",
   databaseURL:       "https://digitalbulletinboard-54f06-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:         "digitalbulletinboard-54f06",
+  storageBucket:     "digitalbulletinboard-54f06.firebasestorage.app",
   messagingSenderId: "987342604782",
   appId:             "1:987342604782:web:90f8a7e895e8f8a2b026ff"
 };
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getDatabase(app);
-// ─────────────────────────────────────────────────────────────────────────────
 
-const postsRef = ref(db, 'posts');
-let editingId  = null;
-let uploadedUrl = '';
-let uploading   = false;
+const fbApp   = initializeApp(firebaseConfig);
+const auth    = getAuth(fbApp);
+const db      = getDatabase(fbApp);
+const storage = getStorage(fbApp);
 
-// ── AUTH GUARD ────────────────────────────────────────────────────────────────
-onAuthStateChanged(auth, async user => {
-  if (!user) { window.location.replace('login.html'); return; }
-  const snap = await get(ref(db, 'users/'+user.uid));
-  if (!snap.exists() || snap.val().status !== 'approved') {
-    await signOut(auth); window.location.replace('login.html'); return;
-  }
-  document.getElementById('auth-check').style.display = 'none';
-  document.getElementById('page').style.display = 'block';
-  document.getElementById('nav-email').textContent = user.email;
-  listenNotifications();
-  listenPosts();
+// ── Auth guard ──
+onAuthStateChanged(auth, user => {
+  if (!user) { window.location.href = '/digitalbulletiinboard/index.html'; return; }
+  document.getElementById('user-email').textContent = user.email;
 });
 
-window.doLogout = async () => { await signOut(auth); window.location.replace('login.html'); };
+document.getElementById('signout-btn').onclick = async () => {
+  await signOut(auth);
+  window.location.href = '/digitalbulletiinboard/index.html';
+};
 
-// ── NOTIFICATION DRAWER ───────────────────────────────────────────────────────
-function listenNotifications() {
-  onValue(ref(db,'notifications'), snap => {
-    const list  = document.getElementById('req-list');
-    const badge = document.getElementById('notif-badge');
-    list.innerHTML = '';
-    let count = 0;
-    if (snap.exists()) {
-      snap.forEach(child => {
-        const n = child.val(); const uid = child.key;
-        if (n.notifStatus !== 'unread') return;
-        count++;
-        const card = document.createElement('div');
-        card.className = 'req-card';
-        card.innerHTML = `
-          <div class="req-name">👤 ${esc(n.name)}</div>
-          <div class="req-email">${esc(n.email)}</div>
-          <div class="req-reason">"${esc(n.reason)}"</div>
-          <div class="req-actions">
-            <button class="btn-approve" onclick="approveUser('${uid}')">✅ Approve</button>
-            <button class="btn-reject"  onclick="rejectUser('${uid}')">❌ Reject</button>
-          </div>`;
-        list.appendChild(card);
-      });
-    }
-    if (count === 0) { list.innerHTML='<p class="empty-drawer">No pending requests.</p>'; badge.style.display='none'; }
-    else { badge.textContent=count; badge.style.display='flex'; }
-  });
+// ── Posts listener ──
+let allPosts = {};
+onValue(ref(db,'posts'), snap => {
+  allPosts = snap.exists() ? snap.val() : {};
+  renderPosts();
+});
+
+function renderPosts() {
+  const list = document.getElementById('posts-list');
+  const keys = Object.keys(allPosts);
+  document.getElementById('posts-count').textContent = keys.length;
+
+  if (!keys.length) {
+    list.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">No posts yet. Create one!</div></div>`;
+    return;
+  }
+
+  list.innerHTML = keys.map(k => {
+    const p = allPosts[k];
+    const typeClass = { text:'type-text', image:'type-image', video:'type-video' }[p.type] || 'type-text';
+    const thumb = p.type === 'image' && (p.imageUrl || p.url)
+      ? `<img src="${esc(p.imageUrl||p.url)}" onerror="this.style.display='none'">`
+      : (p.type === 'video' ? '🎬' : '📝');
+
+    return `<div class="post-item">
+      <div class="post-thumb">${typeof thumb === 'string' && thumb.startsWith('<') ? thumb : `<span>${thumb}</span>`}</div>
+      <div class="post-info">
+        <div class="post-meta">
+          <span class="post-type-badge ${typeClass}">${p.type || 'text'}</span>
+          ${p.category ? `<span class="post-cat">${esc(p.category)}</span>` : ''}
+        </div>
+        <div class="post-name">${esc(p.title || '(no title)')}</div>
+        <div class="post-dur">${p.duration||5000}ms · ${p.fullscreen ? 'Fullscreen' : 'Windowed'}</div>
+      </div>
+      <div class="post-actions">
+        <button class="btn-edit" onclick="editPost('${k}')">✏ Edit</button>
+        <button class="btn-delete" onclick="deletePost('${k}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-window.approveUser = async uid => {
-  await update(ref(db,'users/'+uid),         { status:'approved' });
-  await update(ref(db,'notifications/'+uid), { notifStatus:'read' });
-};
-window.rejectUser = async uid => {
-  await update(ref(db,'users/'+uid),         { status:'rejected' });
-  await update(ref(db,'notifications/'+uid), { notifStatus:'read' });
-};
-window.toggleDrawer = () => {
-  document.getElementById('notif-drawer').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('open');
-};
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s||'');
+  return d.innerHTML;
+}
 
-// ── TYPE TOGGLE ───────────────────────────────────────────────────────────────
-window.onTypeChange = () => {
+// ── Form helpers ──
+window.onTypeChange = function() {
   const t = document.getElementById('f-type').value;
-  document.getElementById('grp-image').style.display = t==='image' ? 'block' : 'none';
-  document.getElementById('grp-video').style.display = t==='video' ? 'block' : 'none';
+  document.getElementById('img-section').style.display = t === 'image' ? 'block' : 'none';
+  document.getElementById('vid-section').style.display = t === 'video' ? 'block' : 'none';
 };
 
-// ── IMAGE UPLOAD ──────────────────────────────────────────────────────────────
-window.onFileSelect = e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (file.size > 10*1024*1024) { alert('File too large. Max 10 MB.'); return; }
+window.clearForm = function() {
+  editKey = null;
+  document.getElementById('form-mode-badge').textContent = 'Create';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-content').value = '';
+  document.getElementById('f-type').value = 'text';
+  document.getElementById('f-cat').value = '';
+  document.getElementById('f-dur').value = '5000';
+  document.getElementById('f-fs').checked = false;
+  document.getElementById('f-imgurl').value = '';
+  document.getElementById('f-vidurl').value = '';
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  onTypeChange();
+};
 
-  // Instant preview
+let editKey = null;
+window.editPost = function(k) {
+  const p = allPosts[k];
+  if (!p) return;
+  editKey = k;
+  document.getElementById('form-mode-badge').textContent = 'Edit';
+  document.getElementById('f-title').value   = p.title || '';
+  document.getElementById('f-content').value = p.content || '';
+  document.getElementById('f-type').value    = p.type || 'text';
+  document.getElementById('f-cat').value     = p.category || '';
+  document.getElementById('f-dur').value     = p.duration || 5000;
+  document.getElementById('f-fs').checked    = !!p.fullscreen;
+  document.getElementById('f-imgurl').value  = p.imageUrl || p.url || '';
+  document.getElementById('f-vidurl').value  = p.url || '';
+  onTypeChange();
+  if ((p.imageUrl || p.url) && p.type === 'image') {
+    document.getElementById('preview-img').src = p.imageUrl || p.url;
+    document.getElementById('preview-wrap').style.display = 'block';
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deletePost = async function(k) {
+  if (!confirm('Delete this post?')) return;
+  await remove(ref(db, 'posts/' + k));
+  showToast('Post deleted', 'success');
+};
+
+// ── File upload ──
+let uploadPending = false; // true while Firebase Storage upload is in progress
+
+window.handleFile = function(file) {
+  if (!file) return;
+  uploadPending = true;
+  document.getElementById('preview-name').textContent = file.name;
   const reader = new FileReader();
-  reader.onload = ev => {
-    const img = document.getElementById('preview-img');
-    img.src = ev.target.result; img.style.display='block';
-    document.getElementById('upload-placeholder').style.display='none';
+  reader.onload = e => {
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('preview-wrap').style.display = 'block';
   };
   reader.readAsDataURL(file);
 
-  // ── Upload to Cloudinary (FREE — 25 GB storage, no credit card) ─────────────
-  if (CLOUDINARY_CLOUD === 'YOUR_CLOUD_NAME') {
-    alert('Please set your Cloudinary Cloud Name and Upload Preset in admin.html.\nSee README for instructions.');
-    uploading = false; return;
-  }
-  const progWrap = document.getElementById('prog-wrap');
-  const bar      = document.getElementById('prog-bar');
-  const status   = document.getElementById('upload-status');
-  progWrap.style.display = 'block';
-  status.style.display   = 'block';
-  status.textContent     = '⏳ Uploading...';
-  uploadedUrl = ''; uploading = true;
+  const prog = document.getElementById('upload-progress');
+  const bar  = document.getElementById('upload-bar');
+  prog.style.display = 'block'; bar.style.width = '0%';
 
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_PRESET);
-  formData.append('folder', 'bulletin-board');
-
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`);
-
-  xhr.upload.onprogress = e => {
-    if (e.lengthComputable) bar.style.width = Math.round(e.loaded/e.total*100)+'%';
-  };
-  xhr.onload = () => {
-    if (xhr.status === 200) {
-      const res = JSON.parse(xhr.responseText);
-      uploadedUrl = res.secure_url;
-      document.getElementById('f-imageUrl').value = uploadedUrl;
-      progWrap.style.display = 'none';
-      status.textContent = '✅ Image uploaded!';
-      uploading = false;
-    } else {
-      console.error('Cloudinary error:', xhr.responseText);
-      status.textContent = '❌ Upload failed. Check your Cloud Name & Preset.';
-      uploading = false;
+  const storageRef = sref(storage, `images/${Date.now()}_${file.name}`);
+  const task = uploadBytesResumable(storageRef, file);
+  task.on('state_changed',
+    snap => { bar.style.width = (snap.bytesTransferred / snap.totalBytes * 100) + '%'; },
+    err  => {
+      uploadPending = false;
+      showToast('Upload failed: ' + err.message, 'error');
+      prog.style.display = 'none';
+    },
+    async () => {
+      const url = await getDownloadURL(task.snapshot.ref);
+      // Write URL to field WITHOUT triggering onUrlInput clearing it
+      document.getElementById('f-imgurl').value = url;
+      uploadPending = false;
+      prog.style.display = 'none';
+      showToast('✅ Image uploaded! You can now save.', 'success');
     }
-  };
-  xhr.onerror = () => { status.textContent='❌ Network error. Try again.'; uploading=false; };
-  xhr.send(formData);
+  );
 };
 
-// Drag-and-drop
-const zone = document.getElementById('upload-zone');
-if (zone) {
-  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('over'); });
-  zone.addEventListener('dragleave', ()=> zone.classList.remove('over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('over');
-    const file = e.dataTransfer.files[0];
-    if (file) { document.getElementById('img-input').files=e.dataTransfer.files; onFileSelect({target:{files:[file]}}); }
-  });
-}
+window.handleDrop = function(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleFile(file);
+};
 
-// ── SAVE / UPDATE ─────────────────────────────────────────────────────────────
-window.savePost = async () => {
-  if (uploading) { alert('Image is still uploading. Please wait.'); return; }
-  const title    = document.getElementById('f-title').value.trim();
-  const content  = document.getElementById('f-content').value.trim();
-  const type     = document.getElementById('f-type').value;
-  const cat      = document.getElementById('f-cat').value.trim();
-  const dur      = Number(document.getElementById('f-dur').value) || 5000;
-  const full     = document.getElementById('f-fullscreen').checked;
-  const videoUrl = document.getElementById('f-videoUrl').value.trim();
-  const imageUrl = document.getElementById('f-imageUrl').value.trim() || uploadedUrl;
+// ── Save ──
+window.savePost = async function() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { showToast('Title is required', 'error'); return; }
 
-  if (!title) { alert('Please enter a title.'); document.getElementById('f-title').focus(); return; }
-  if (type==='image' && !imageUrl) { alert('Please upload an image first.'); return; }
-  if (type==='video' && !videoUrl) { alert('Please enter a video URL.'); return; }
+  const type   = document.getElementById('f-type').value;
+  const imgUrl = document.getElementById('f-imgurl').value.trim();
+  const vidUrl = document.getElementById('f-vidurl').value.trim();
 
-  const btn = document.getElementById('btn-save');
-  btn.disabled=true;
-  document.getElementById('save-label').textContent = editingId ? '⏳ Updating...' : '⏳ Saving...';
+  // Guard: upload still in progress
+  if (type === 'image' && uploadPending) {
+    showToast('⏳ Image still uploading, please wait…', 'error'); return;
+  }
+  if (type === 'image' && !imgUrl) { showToast('Please upload or paste an image URL', 'error'); return; }
+  if (type === 'video' && !vidUrl) { showToast('Please enter a video URL', 'error'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
 
   const data = {
-    title, content, type,
-    category: cat,
-    duration: dur,
-    fullscreen: full,
-    url:      type==='video' ? videoUrl : (type==='image' ? imageUrl : ''),
-    imageUrl: type==='image' ? imageUrl : '',
-    updatedAt: Date.now()
+    title,
+    content:    document.getElementById('f-content').value.trim(),
+    type,
+    category:   document.getElementById('f-cat').value.trim(),
+    duration:   Number(document.getElementById('f-dur').value) || 5000,
+    fullscreen: document.getElementById('f-fs').checked,
   };
+  if (type === 'image') data.imageUrl = imgUrl;
+  if (type === 'video') data.url = vidUrl;
 
   try {
-    if (editingId) {
-      await update(ref(db,'posts/'+editingId), data);
+    if (editKey) {
+      await update(ref(db, 'posts/' + editKey), data);
+      showToast('Post updated!', 'success');
     } else {
-      data.createdAt = Date.now();
-      await push(postsRef, data);
+      await push(ref(db, 'posts'), data);
+      showToast('Post saved!', 'success');
     }
     clearForm();
   } catch(e) {
-    alert('Error saving post: '+e.message);
+    showToast('Error: ' + e.message, 'error');
   }
-  btn.disabled=false;
+
+  btn.disabled = false;
+  btn.innerHTML = '💾 Save Post';
 };
 
-// ── LISTEN POSTS ──────────────────────────────────────────────────────────────
-function listenPosts() {
-  onValue(postsRef, snap => {
-    const list = document.getElementById('posts-list');
-    list.innerHTML = '';
-    let cnt = 0;
-    if (!snap.exists()) {
-      list.innerHTML='<div class="no-posts">No posts yet — create one! 👈</div>';
-      document.getElementById('post-cnt').textContent=0; return;
-    }
-    snap.forEach(child => {
-      const d=child.val(); const key=child.key; cnt++;
-      const typeTag = d.type==='image'?'🖼️ Image': d.type==='video'?'🎥 Video':'📝 Text';
-      const thumbHtml = (d.type==='image'&&d.imageUrl)
-        ? `<div class="thumb"><img src="${esc(d.imageUrl)}" alt=""></div>`
-        : `<div class="thumb">${d.type==='video'?'🎥':d.type==='image'?'🖼️':'📝'}</div>`;
-      const card = document.createElement('div');
-      card.className='post-card';
-      // Safely encode data for onclick
-      const dataStr = encodeURIComponent(JSON.stringify(d));
-      const keyStr  = encodeURIComponent(key);
-      card.innerHTML=`
-        ${thumbHtml}
-        <div class="post-body">
-          <div class="post-tags">
-            <span class="tag ${d.type}">${typeTag}</span>
-            ${d.category?`<span class="tag cat">${esc(d.category)}</span>`:''}
-          </div>
-          <div class="post-title">${esc(d.title)}</div>
-          <div class="post-meta">${d.duration||5000}ms · ${d.fullscreen?'Fullscreen':'Windowed'}</div>
-        </div>
-        <div class="post-btns">
-          <button class="btn-edit" data-key="${keyStr}" data-d="${dataStr}">✏️ Edit</button>
-          <button class="btn-del"  data-key="${keyStr}">🗑️ Delete</button>
-        </div>`;
-      list.appendChild(card);
-    });
-    document.getElementById('post-cnt').textContent=cnt;
-    // Attach events safely
-    list.querySelectorAll('.btn-edit').forEach(btn=>{
-      btn.onclick=()=>startEdit(decodeURIComponent(btn.dataset.key), JSON.parse(decodeURIComponent(btn.dataset.d)));
-    });
-    list.querySelectorAll('.btn-del').forEach(btn=>{
-      btn.onclick=()=>delPost(decodeURIComponent(btn.dataset.key));
-    });
-  });
+// ── Toast ──
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => { t.className = ''; }, 3000);
 }
-
-// ── EDIT ──────────────────────────────────────────────────────────────────────
-function startEdit(key, d) {
-  editingId = key;
-  document.getElementById('f-title').value    = d.title    || '';
-  document.getElementById('f-content').value  = d.content  || '';
-  document.getElementById('f-type').value     = d.type     || 'text';
-  document.getElementById('f-cat').value      = d.category || '';
-  document.getElementById('f-dur').value      = d.duration || 5000;
-  document.getElementById('f-fullscreen').checked = !!d.fullscreen;
-  document.getElementById('f-videoUrl').value = d.url      || '';
-  document.getElementById('f-imageUrl').value = d.imageUrl || '';
-  uploadedUrl = d.imageUrl || '';
-
-  if (d.type==='image' && d.imageUrl) {
-    const img = document.getElementById('preview-img');
-    img.src=d.imageUrl; img.style.display='block';
-    document.getElementById('upload-placeholder').style.display='none';
-    document.getElementById('upload-status').style.display='none';
-  }
-  onTypeChange();
-  document.getElementById('form-title').textContent = 'Edit Post';
-  document.getElementById('form-chip').textContent  = 'Editing';
-  document.getElementById('form-chip').className    = 'chip edit';
-  document.getElementById('save-label').textContent = '✅ Update Post';
-  window.scrollTo({top:0, behavior:'smooth'});
-}
-
-// ── DELETE ────────────────────────────────────────────────────────────────────
-function delPost(key) {
-  if (confirm('Delete this post?')) remove(ref(db,'posts/'+key));
-}
-
-// ── CLEAR ─────────────────────────────────────────────────────────────────────
-window.clearForm = () => {
-  ['f-title','f-content','f-cat','f-dur','f-videoUrl','f-imageUrl'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
-  document.getElementById('f-type').value='text';
-  document.getElementById('f-fullscreen').checked=false;
-  document.getElementById('grp-image').style.display='none';
-  document.getElementById('grp-video').style.display='none';
-  const img=document.getElementById('preview-img');
-  img.src=''; img.style.display='none';
-  document.getElementById('upload-placeholder').style.display='block';
-  document.getElementById('prog-wrap').style.display='none';
-  document.getElementById('upload-status').style.display='none';
-  uploadedUrl=''; uploading=false; editingId=null;
-  document.getElementById('form-title').textContent='New Post';
-  document.getElementById('form-chip').textContent='Create';
-  document.getElementById('form-chip').className='chip';
-  document.getElementById('save-label').textContent='💾 Save Post';
-  document.getElementById('btn-save').disabled=false;
-};
-
-// XSS-safe escape
-function esc(s){ const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
 </script>
 </body>
 </html>
