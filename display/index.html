@@ -523,30 +523,9 @@
       <div id="clock-time">--:--</div>
       <div id="clock-date">Loading…</div>
     </div>
-
-    <button id="admin-login-btn" onclick="openAdminLogin()">🔐 Admin</button>
-  </div>
-
-  <!-- Admin Login Modal -->
-  <div id="login-backdrop" onclick="handleLBClick(event)">
-    <div id="login-modal">
-      <h2>Admin Login</h2>
-      <div class="lm-sub">Sign in to manage bulletin board posts</div>
-      <div class="lm-field">
-        <label>Email</label>
-        <input type="email" id="lm-email" placeholder="admin@example.com" autocomplete="username">
-      </div>
-      <div class="lm-field">
-        <label>Password</label>
-        <input type="password" id="lm-pass" placeholder="••••••••" autocomplete="current-password"
-               onkeydown="if(event.key==='Enter') doAdminLogin()">
-      </div>
-      <div id="lm-error"></div>
-      <div class="lm-actions">
-        <button class="lm-cancel" onclick="closeAdminLogin()">Cancel</button>
-        <button class="lm-submit" id="lm-submit" onclick="doAdminLogin()">Sign In →</button>
-      </div>
-    </div>
+    <a class="btn-display-top" href="..admin/login.html" target="_blank">
+    <button id="admin-login-btn" onclick="openAdminLogin()">🔐 Admin</button>  
+    </a>
   </div>
 
   <div id="slideshow"></div>
