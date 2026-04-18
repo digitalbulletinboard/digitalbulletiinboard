@@ -227,84 +227,13 @@
       cursor: pointer; white-space: nowrap;
       transition: background 0.18s, border-color 0.18s;
       display: flex; align-items: center; gap: 6px;
+      text-decoration: none;
     }
     #admin-login-btn:hover {
       background: rgba(99,102,241,0.38);
       border-color: rgba(99,102,241,0.7);
       color: #fff;
     }
-
-    /* ── Login Modal ── */
-    #login-backdrop {
-      position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(10px);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-    #login-backdrop.open { opacity: 1; pointer-events: auto; }
-    #login-modal {
-      background: rgba(15,23,42,0.95);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 22px;
-      padding: 40px 44px;
-      width: 100%; max-width: 400px;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
-      transform: translateY(22px) scale(0.97);
-      transition: transform 0.28s ease;
-    }
-    #login-backdrop.open #login-modal { transform: translateY(0) scale(1); }
-    #login-modal h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 24px; font-weight: 700; color: #fff;
-      margin-bottom: 4px;
-    }
-    #login-modal .lm-sub {
-      font-size: 13px; color: rgba(255,255,255,0.38);
-      margin-bottom: 28px;
-    }
-    .lm-field { margin-bottom: 16px; }
-    .lm-field label {
-      display: block; font-size: 11px; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      color: rgba(255,255,255,0.4); margin-bottom: 7px;
-    }
-    .lm-field input {
-      width: 100%; padding: 12px 14px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 9px; color: #fff;
-      font-family: 'Outfit', sans-serif; font-size: 14px;
-      outline: none; transition: border-color 0.2s;
-    }
-    .lm-field input:focus { border-color: rgba(99,102,241,0.7); }
-    .lm-field input::placeholder { color: rgba(255,255,255,0.22); }
-    #lm-error {
-      font-size: 13px; color: #f87171;
-      min-height: 18px; margin-bottom: 14px;
-    }
-    .lm-actions { display: flex; gap: 10px; }
-    .lm-cancel {
-      flex: 1; padding: 12px; border-radius: 9px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.55);
-      font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500;
-      cursor: pointer; transition: background 0.18s;
-    }
-    .lm-cancel:hover { background: rgba(255,255,255,0.13); }
-    .lm-submit {
-      flex: 2; padding: 12px; border-radius: 9px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      border: none; color: #fff;
-      font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
-      cursor: pointer; transition: opacity 0.18s, transform 0.18s;
-      box-shadow: 0 4px 18px rgba(99,102,241,0.4);
-    }
-    .lm-submit:hover  { opacity: 0.9; transform: translateY(-1px); }
-    .lm-submit:active { transform: scale(0.98); }
-    .lm-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     /* ── SLIDES — full viewport ── */
     #slideshow {
@@ -523,9 +452,8 @@
       <div id="clock-time">--:--</div>
       <div id="clock-date">Loading…</div>
     </div>
-    <a class="btn-display-top" href=".admin/login.html" target="_blank">
-    <button id="admin-login-btn" onclick="openAdminLogin()">🔐 Admin</button>  
-    </a>
+
+    <a id="admin-login-btn" href="../admin/login.html" target="_blank">🔐 Admin</a>
   </div>
 
   <div id="slideshow"></div>
@@ -538,8 +466,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, signInWithEmailAndPassword }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
@@ -552,49 +479,7 @@ const firebaseConfig = {
 };
 const app  = initializeApp(firebaseConfig);
 const db   = getDatabase(app);
-const auth = getAuth(app);
 
-// ── ADMIN LOGIN MODAL ──
-window.openAdminLogin = function() {
-  document.getElementById('login-backdrop').classList.add('open');
-  setTimeout(() => document.getElementById('lm-email').focus(), 80);
-  document.getElementById('lm-error').textContent = '';
-};
-window.closeAdminLogin = function() {
-  document.getElementById('login-backdrop').classList.remove('open');
-  document.getElementById('lm-email').value = '';
-  document.getElementById('lm-pass').value = '';
-  document.getElementById('lm-error').textContent = '';
-  document.getElementById('lm-submit').disabled = false;
-  document.getElementById('lm-submit').textContent = 'Sign In →';
-};
-window.handleLBClick = function(e) {
-  if (e.target.id === 'login-backdrop') closeAdminLogin();
-};
-window.doAdminLogin = async function() {
-  const email = document.getElementById('lm-email').value.trim();
-  const pass  = document.getElementById('lm-pass').value;
-  const errEl = document.getElementById('lm-error');
-  const btn   = document.getElementById('lm-submit');
-  if (!email || !pass) { errEl.textContent = 'Please enter email and password.'; return; }
-  btn.disabled = true; btn.textContent = 'Signing in…';
-  errEl.textContent = '';
-  try {
-    await signInWithEmailAndPassword(auth, email, pass);
-    window.open('admin.html', '_blank');
-    closeAdminLogin();
-  } catch(e) {
-    const msgs = {
-      'auth/user-not-found':     'No account found with that email.',
-      'auth/wrong-password':     'Incorrect password.',
-      'auth/invalid-email':      'Invalid email address.',
-      'auth/too-many-requests':  'Too many attempts. Try again later.',
-      'auth/invalid-credential': 'Invalid email or password.',
-    };
-    errEl.textContent = msgs[e.code] || 'Login failed. Please try again.';
-    btn.disabled = false; btn.textContent = 'Sign In →';
-  }
-};
 
 // ── CLOCK ──
 function updateClock() {
