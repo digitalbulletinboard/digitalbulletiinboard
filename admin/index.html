@@ -491,8 +491,18 @@ window.deletePost = async function(k) {
 
 // ── File upload ──
 // ── Cloudinary config (unsigned upload — no secret needed) ──
-const CLOUDINARY_CLOUD = "dmzmkkhao";
-const CLOUDINARY_PRESET = "lckingcg";
+<script type="module">
+import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, push, onValue, remove, update, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+// ── CLOUDINARY CONFIG (free — no credit card needed) ─────────────────────────
+// 1. Sign up free at https://cloudinary.com
+// 2. Dashboard → Settings → Upload → Add upload preset → set "Signing Mode" to UNSIGNED
+// 3. Paste your Cloud Name and Preset Name below
+const CLOUDINARY_CLOUD  = "dmzmkkhao";   // e.g. "abc123xyz"
+const CLOUDINARY_PRESET = "lckingcg"; // e.g. "bulletin_board_unsigned"
 
 let uploadPending = false;
 
