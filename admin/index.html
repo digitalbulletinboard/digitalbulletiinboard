@@ -318,7 +318,7 @@
         <div id="preview-name"></div>
       </div>
       <label class="field-label" style="margin-top:14px;">Or paste image URL</label>
-      <input type="url" id="f-imgurl" placeholder="https://…" oninput="onUrlInput()">
+      <input type="url" id="f-imgurl" placeholder="https://…">
     </div>
 
     <!-- Video URL (shown for video type) -->
@@ -384,13 +384,13 @@ const storage = getStorage(fbApp);
 
 // ── Auth guard ──
 onAuthStateChanged(auth, user => {
-  if (!user) { window.location.href = 'index.html'; return; }
+  if (!user) { window.location.href = '/digitalbulletiinboard/index.html'; return; }
   document.getElementById('user-email').textContent = user.email;
 });
 
 document.getElementById('signout-btn').onclick = async () => {
   await signOut(auth);
-  window.location.href = 'index.html';
+  window.location.href = '/digitalbulletiinboard/index.html';
 };
 
 // ── Posts listener ──
@@ -461,7 +461,6 @@ window.clearForm = function() {
   document.getElementById('f-vidurl').value = '';
   document.getElementById('preview-wrap').style.display = 'none';
   document.getElementById('upload-progress').style.display = 'none';
-  uploadedUrl = null;
   onTypeChange();
 };
 
@@ -494,10 +493,11 @@ window.deletePost = async function(k) {
 };
 
 // ── File upload ──
-let uploadedUrl = null;
+let uploadPending = false; // true while Firebase Storage upload is in progress
+
 window.handleFile = function(file) {
   if (!file) return;
-  uploadedUrl = null;
+  uploadPending = true;
   document.getElementById('preview-name').textContent = file.name;
   const reader = new FileReader();
   reader.onload = e => {
@@ -514,12 +514,18 @@ window.handleFile = function(file) {
   const task = uploadBytesResumable(storageRef, file);
   task.on('state_changed',
     snap => { bar.style.width = (snap.bytesTransferred / snap.totalBytes * 100) + '%'; },
-    err  => { showToast('Upload failed: ' + err.message, 'error'); prog.style.display = 'none'; },
-    async () => {
-      uploadedUrl = await getDownloadURL(task.snapshot.ref);
-      document.getElementById('f-imgurl').value = uploadedUrl;
+    err  => {
+      uploadPending = false;
+      showToast('Upload failed: ' + err.message, 'error');
       prog.style.display = 'none';
-      showToast('Image uploaded!', 'success');
+    },
+    async () => {
+      const url = await getDownloadURL(task.snapshot.ref);
+      // Write URL to field WITHOUT triggering onUrlInput clearing it
+      document.getElementById('f-imgurl').value = url;
+      uploadPending = false;
+      prog.style.display = 'none';
+      showToast('✅ Image uploaded! You can now save.', 'success');
     }
   );
 };
@@ -531,17 +537,19 @@ window.handleDrop = function(e) {
   if (file && file.type.startsWith('image/')) handleFile(file);
 };
 
-window.onUrlInput = function() { uploadedUrl = null; };
-
 // ── Save ──
 window.savePost = async function() {
   const title = document.getElementById('f-title').value.trim();
   if (!title) { showToast('Title is required', 'error'); return; }
 
-  const type = document.getElementById('f-type').value;
-  const imgUrl = uploadedUrl || document.getElementById('f-imgurl').value.trim();
+  const type   = document.getElementById('f-type').value;
+  const imgUrl = document.getElementById('f-imgurl').value.trim();
   const vidUrl = document.getElementById('f-vidurl').value.trim();
 
+  // Guard: upload still in progress
+  if (type === 'image' && uploadPending) {
+    showToast('⏳ Image still uploading, please wait…', 'error'); return;
+  }
   if (type === 'image' && !imgUrl) { showToast('Please upload or paste an image URL', 'error'); return; }
   if (type === 'video' && !vidUrl) { showToast('Please enter a video URL', 'error'); return; }
 
