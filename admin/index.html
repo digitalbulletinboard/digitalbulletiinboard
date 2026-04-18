@@ -364,8 +364,6 @@ import { getAuth, onAuthStateChanged, signOut }
                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, push, set, remove, onValue, update }
                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL }
-                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
@@ -380,7 +378,6 @@ const firebaseConfig = {
 const fbApp   = initializeApp(firebaseConfig);
 const auth    = getAuth(fbApp);
 const db      = getDatabase(fbApp);
-const storage = getStorage(fbApp);
 
 // ── Auth guard ──
 onAuthStateChanged(auth, user => {
@@ -493,11 +490,17 @@ window.deletePost = async function(k) {
 };
 
 // ── File upload ──
-let uploadPending = false; // true while Firebase Storage upload is in progress
+// ── Cloudinary config (unsigned upload — no secret needed) ──
+const CLOUDINARY_CLOUD = 'dljzagkks';
+const CLOUDINARY_PRESET = 'bulletin_board_unsigned';
+
+let uploadPending = false;
 
 window.handleFile = function(file) {
   if (!file) return;
   uploadPending = true;
+
+  // Show local preview immediately
   document.getElementById('preview-name').textContent = file.name;
   const reader = new FileReader();
   reader.onload = e => {
@@ -506,28 +509,45 @@ window.handleFile = function(file) {
   };
   reader.readAsDataURL(file);
 
+  // Show progress bar
   const prog = document.getElementById('upload-progress');
   const bar  = document.getElementById('upload-bar');
   prog.style.display = 'block'; bar.style.width = '0%';
 
-  const storageRef = sref(storage, `images/${Date.now()}_${file.name}`);
-  const task = uploadBytesResumable(storageRef, file);
-  task.on('state_changed',
-    snap => { bar.style.width = (snap.bytesTransferred / snap.totalBytes * 100) + '%'; },
-    err  => {
-      uploadPending = false;
-      showToast('Upload failed: ' + err.message, 'error');
-      prog.style.display = 'none';
-    },
-    async () => {
-      const url = await getDownloadURL(task.snapshot.ref);
-      // Write URL to field WITHOUT triggering onUrlInput clearing it
-      document.getElementById('f-imgurl').value = url;
-      uploadPending = false;
-      prog.style.display = 'none';
-      showToast('✅ Image uploaded! You can now save.', 'success');
+  // Upload to Cloudinary via XHR so we get real progress
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`);
+
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) {
+      bar.style.width = Math.round(e.loaded / e.total * 100) + '%';
     }
-  );
+  };
+
+  xhr.onload = () => {
+    uploadPending = false;
+    prog.style.display = 'none';
+    if (xhr.status === 200) {
+      const res = JSON.parse(xhr.responseText);
+      document.getElementById('f-imgurl').value = res.secure_url;
+      document.getElementById('preview-img').src = res.secure_url;
+      showToast('✅ Image uploaded! You can now save.', 'success');
+    } else {
+      showToast('Upload failed: ' + xhr.statusText, 'error');
+    }
+  };
+
+  xhr.onerror = () => {
+    uploadPending = false;
+    prog.style.display = 'none';
+    showToast('Upload failed. Check your connection.', 'error');
+  };
+
+  xhr.send(formData);
 };
 
 window.handleDrop = function(e) {
