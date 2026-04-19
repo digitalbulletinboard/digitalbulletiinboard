@@ -325,17 +325,17 @@
     }
     /* Blurred background fills the letterbox/pillarbox gaps */
     .img-wrap .img-blur-bg {
-      position: absolute; inset: -20px;
+      position: absolute; inset: -60px;
       background-size: cover; background-position: center;
-      filter: blur(28px) brightness(0.55) saturate(1.3);
-      transform: scale(1.08);
+      filter: blur(40px) brightness(0.5) saturate(1.4);
+      transform: scale(1.15);
       z-index: 0;
     }
-    /* Main image stays fully visible, centered on top */
+    /* Main image stays fully visible, centered on top — NEVER cropped */
     .img-wrap.fs img {
       position: relative; z-index: 1;
       width: 100%; height: 100%;
-      object-fit: cover;
+      object-fit: contain;
     }
     /* Non-fullscreen: contained with nice shadow */
     .img-wrap:not(.fs) img {
