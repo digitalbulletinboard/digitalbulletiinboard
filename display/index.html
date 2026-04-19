@@ -253,6 +253,7 @@
     /* ── SLIDES — full viewport ── */
     #slideshow {
       position: fixed; inset: 0; z-index: 1;
+      width: 100vw; height: 100vh;
       overflow: hidden;
     }
 
@@ -331,9 +332,20 @@
       transform: scale(1.15);
       z-index: 0;
     }
-    /* Main image stays fully visible, centered on top — NEVER cropped */
+    /* Fullscreen: image covers entire viewport — no gaps, no blank space */
+    .img-wrap.fs {
+      position: fixed; inset: 0; z-index: 1;
+      width: 100vw; height: 100vh;
+    }
+    .img-wrap.fs .img-blur-bg {
+      position: absolute; inset: -60px;
+      background-size: cover; background-position: center;
+      filter: blur(40px) brightness(0.5) saturate(1.4);
+      transform: scale(1.15);
+      z-index: 0;
+    }
     .img-wrap.fs img {
-      position: relative; z-index: 1;
+      position: absolute; inset: 0; z-index: 1;
       width: 100%; height: 100%;
       object-fit: contain;
     }
