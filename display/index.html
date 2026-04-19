@@ -235,6 +235,21 @@
       color: #fff;
     }
 
+    /* ── Fullscreen toggle button ── */
+    #fs-btn {
+      flex-shrink: 0;
+      margin-left: 14px;
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.7);
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.18s, color 0.18s;
+    }
+    #fs-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
     /* ── SLIDES — full viewport ── */
     #slideshow {
       position: fixed; inset: 0; z-index: 1;
@@ -320,12 +335,31 @@
     .img-wrap.fs img {
       position: relative; z-index: 1;
       width: 100%; height: 100%;
-      object-fit: contain;
+      object-fit: cover;
     }
+    /* Non-fullscreen: contained with nice shadow */
     .img-wrap:not(.fs) img {
       position: relative; z-index: 1;
       max-width: 88vw; max-height: 82vh; object-fit: contain;
       border-radius: 20px; box-shadow: 0 24px 72px rgba(0,0,0,0.5);
+    }
+
+    /* ── Browser Fullscreen API overlay ── */
+    /* When document is in fullscreen, raise slideshow above everything */
+    :fullscreen #slideshow,
+    :-webkit-full-screen #slideshow,
+    :-moz-full-screen #slideshow {
+      z-index: 9999;
+    }
+    :fullscreen #topbar,
+    :-webkit-full-screen #topbar,
+    :-moz-full-screen #topbar {
+      display: none;
+    }
+    :fullscreen #prog-wrap,
+    :-webkit-full-screen #prog-wrap,
+    :-moz-full-screen #prog-wrap {
+      z-index: 9999;
     }
     .img-cat {
       position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
@@ -453,6 +487,7 @@
       <div id="clock-date">Loading…</div>
     </div>
 
+    <button id="fs-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
     <a id="admin-login-btn" href="../admin/login.html" target="_blank">🔐 Admin</a>
   </div>
 
@@ -480,6 +515,21 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const db   = getDatabase(app);
 
+
+// ── FULLSCREEN ──
+window.toggleFullscreen = function() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+    document.getElementById('fs-btn').textContent = '✕';
+  } else {
+    document.exitFullscreen().catch(() => {});
+    document.getElementById('fs-btn').textContent = '⛶';
+  }
+};
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('fs-btn');
+  if (btn) btn.textContent = document.fullscreenElement ? '✕' : '⛶';
+});
 
 // ── CLOCK ──
 function updateClock() {
