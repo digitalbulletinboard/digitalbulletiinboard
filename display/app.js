@@ -4,10 +4,50 @@ import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebas
 
 const postsRef = ref(db, "posts");
 
-let slides = [];
-let currentSlide = 0;
-let data = [];
-let timer = null;
+let slides = document.querySelectorAll(".slide");
+let index = 0;
+let timer;
+
+function showSlide(i) {
+  // Stop previous timer
+  clearTimeout(timer);
+
+  slides.forEach(slide => {
+    slide.style.display = "none",
+
+      let vid = slide.querySelector("video");
+      if (vid) {
+          vid.pause();
+          vid.currentTime = 0;
+      }
+  });
+
+  let current = slides[i];
+  current.style.display = "block";
+
+  let video = current.querySelector("video");
+
+  if (video) {
+      video.muted = true;
+      video.play();
+
+      video.onended = () => {
+        nextSlide();
+      };
+
+  } else {
+      timer = setTimeout(nextSlide, 3000);
+  }
+}
+
+function nextSlide() {
+    index = (index + 1) % slides.length;
+    showSlide(index);
+}
+
+  // Start slideshow
+  showSlide(index);
+}
 
 // 🟢 PROGRESS BAR SETUP
 function createProgressBar() {
