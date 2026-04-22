@@ -265,6 +265,8 @@
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
     #loading-screen p { font-size: 14px; color: #8fa3b8; font-weight: 500; }
     #loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .empty-msg { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:32px;color:#8fa3b8;text-align:center;padding:40px;z-index:5; }
+    .empty-msg small { font-family:Sora,sans-serif;font-size:16px;font-weight:400;display:block;margin-top:8px; }
   </style>
 </head>
 <body>
@@ -313,17 +315,16 @@
 </div>
 
 <script type="module">
-// ── NOTE: display.html does NOT use firebase.js to avoid triggering auth ──────
+// ── NOTE: display.html initialises Firebase directly (no firebase.js import)
+// so that auth state changes in admin.js don't redirect this page
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONFIG — edit these two values
-// ─────────────────────────────────────────────────────────────────────────────
-const OWM_API_KEY = "YOUR_OPENWEATHERMAP_API_KEY";   // get free key at openweathermap.org
+// ─── EDIT THESE ───────────────────────────────────────────────────────────────
+const OWM_API_KEY = "YOUR_OPENWEATHERMAP_API_KEY"; // openweathermap.org free key
 const OWM_CITY    = "Cebu City";
-const OWM_UNITS   = "metric";   // "metric" = °C, "imperial" = °F
+const OWM_UNITS   = "metric";   // "metric" °C  |  "imperial" °F
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
@@ -340,102 +341,89 @@ const app      = initializeApp(firebaseConfig);
 const db       = getDatabase(app);
 const postsRef = ref(db, "posts");
 
-// ── DOM refs ──────────────────────────────────────────────────────────────────
+// ── DOM ───────────────────────────────────────────────────────────────────────
 const area        = document.getElementById('slideshow-area');
 const dotsEl      = document.getElementById('slide-dots');
 const progressBar = document.getElementById('progress-bar');
 const infoBar     = document.getElementById('info-bar');
+const btnPrev     = document.getElementById('arrow-prev');
+const btnNext     = document.getElementById('arrow-next');
 
-// ── Slideshow state ───────────────────────────────────────────────────────────
-let data         = [];   // raw post objects from Firebase
-let slideEls     = [];   // NodeList of .slide elements currently in DOM
-let currentIndex = 0;
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let posts        = [];   // data from Firebase
+let current      = 0;   // active slide index
 let timer        = null;
-let initialized  = false; // first load flag — prevents index reset on Firebase re-fires
+let firstLoad    = true;
 
 // ── FIREBASE ──────────────────────────────────────────────────────────────────
 onValue(postsRef, (snapshot) => {
-  const fresh = [];
+  posts = [];
   if (snapshot.exists()) {
-    snapshot.forEach(child => fresh.push({ _key: child.key, ...child.val() }));
+    snapshot.forEach(c => posts.push({ _key: c.key, ...c.val() }));
   }
 
-  const wasEmpty = data.length === 0;
-  data = fresh;
-
-  if (!initialized) {
-    // Very first load: build everything from scratch
-    initialized = true;
-    buildSlides();
+  if (firstLoad) {
+    firstLoad = false;
+    current = 0;
+    buildDOM();
     dismissLoader();
   } else {
-    // Subsequent Firebase updates (real-time edits from admin):
-    // Rebuild slides but preserve current position as best we can
-    const prevKey = slideEls[currentIndex]?.dataset?.key;
-    buildSlides();
-    // Try to stay on the same slide key after rebuild
-    const newIdx = data.findIndex(d => d._key === prevKey);
-    currentIndex = newIdx >= 0 ? newIdx : 0;
-    showSlide(currentIndex, false); // false = don't restart timer (was already running)
+    // Live update from admin — rebuild but stay on same key if possible
+    const prevKey = posts[current]?._key;
+    buildDOM();
+    const idx = posts.findIndex(p => p._key === prevKey);
+    current = idx >= 0 ? idx : 0;
+    activateSlide(current, false); // just switch visuals, keep existing timer
   }
 });
 
 function dismissLoader() {
-  const ls = document.getElementById('loading-screen');
-  if (ls) { ls.classList.add('hidden'); setTimeout(() => ls.remove(), 600); }
+  const el = document.getElementById('loading-screen');
+  if (el) { el.classList.add('hidden'); setTimeout(() => el.remove(), 600); }
 }
 
-// ── BUILD DOM SLIDES ──────────────────────────────────────────────────────────
-function buildSlides() {
-  // Remove old slides only
+// ── BUILD ALL SLIDE ELEMENTS ──────────────────────────────────────────────────
+function buildDOM() {
+  // Remove old slides
   area.querySelectorAll('.slide').forEach(s => s.remove());
   dotsEl.innerHTML = '';
 
-  if (data.length === 0) {
-    showEmpty();
-    slideEls = [];
-    document.getElementById('arrow-prev').style.display = 'none';
-    document.getElementById('arrow-next').style.display = 'none';
+  if (posts.length === 0) {
+    btnPrev.style.display = 'none';
+    btnNext.style.display = 'none';
+    const empty = document.createElement('div');
+    empty.className = 'empty-msg';
+    empty.innerHTML = '<div>📭<br>No slides yet.<br><small>Add slides from the admin panel.</small></div>';
+    area.insertBefore(empty, btnPrev);
     stopTimer();
     return;
   }
 
-  document.getElementById('arrow-prev').style.display = '';
-  document.getElementById('arrow-next').style.display = '';
+  area.querySelectorAll('.empty-msg').forEach(e => e.remove());
+  btnPrev.style.display = '';
+  btnNext.style.display = '';
 
-  data.forEach((item, i) => {
-    const slide = makeSlide(item);
-    slide.dataset.key   = item._key;
-    slide.dataset.index = i;
-    // Insert slides before arrow buttons (which are the last fixed children)
-    area.insertBefore(slide, document.getElementById('arrow-prev'));
+  posts.forEach((item, i) => {
+    // ── slide element ──
+    const slide = makeSlideEl(item);
+    slide.dataset.key = item._key;
+    // Insert before arrows so arrows stay on top
+    area.insertBefore(slide, btnPrev);
 
-    // Dot
-    const dot = document.createElement('div');
+    // ── dot ──
+    const dot = document.createElement('span');
     dot.className = 'dot';
-    dot.addEventListener('click', () => goTo(i));
     dotsEl.appendChild(dot);
   });
 
-  slideEls = Array.from(area.querySelectorAll('.slide'));
-
-  // Clamp currentIndex in case slides were deleted
-  if (currentIndex >= slideEls.length) currentIndex = 0;
-
-  // Start cycling from currentIndex
-  startSlideshow();
+  // Clamp index
+  if (current >= posts.length) current = 0;
+  // Begin cycle
+  stopTimer();
+  activateSlide(current, true);
 }
 
-function showEmpty() {
-  area.querySelectorAll('.slide,.empty-msg').forEach(e => e.remove());
-  const div = document.createElement('div');
-  div.className = 'empty-msg';
-  div.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:32px;color:#8fa3b8;text-align:center;padding:40px;z-index:5;';
-  div.innerHTML = '<div><div style="font-size:64px;margin-bottom:16px">📭</div>No slides yet.<br><span style="font-family:Sora,sans-serif;font-size:16px;font-weight:400">Add slides from the admin panel.</span></div>';
-  area.insertBefore(div, document.getElementById('arrow-prev'));
-}
-
-function makeSlide(item) {
+function makeSlideEl(item) {
   const slide = document.createElement('div');
   slide.className = 'slide';
 
@@ -443,51 +431,33 @@ function makeSlide(item) {
     slide.classList.add('slide-bg-' + (item.bgtheme || 'blue'));
     const inner = document.createElement('div');
     inner.className = 'slide-inner';
-
-    const cat = document.createElement('div');
-    cat.className = 'slide-category';
-    cat.textContent = item.category || 'Announcement';
-
-    const ttl = document.createElement('div');
-    ttl.className = 'slide-title';
-    ttl.textContent = item.title || '';
-
-    const cnt = document.createElement('div');
-    cnt.className = 'slide-content';
-    cnt.textContent = item.content || '';
-
+    const cat  = el('div', 'slide-category', item.category || 'Announcement');
+    const ttl  = el('div', 'slide-title',    item.title    || '');
+    const cnt  = el('div', 'slide-content',  item.content  || '');
     inner.append(cat, ttl, cnt);
     slide.appendChild(inner);
 
   } else if (item.type === 'image') {
     const wrap = document.createElement('div');
     wrap.className = 'slide-image-wrap';
-
-    const img = new Image();
-    img.src = item.mediaUrl || '';
-    img.alt = item.title || '';
-
-    const cap = document.createElement('div');
+    const img  = document.createElement('img');
+    img.src    = item.mediaUrl || '';
+    img.alt    = item.title   || '';
+    const cap  = document.createElement('div');
     cap.className = 'slide-image-caption';
-    const tag = document.createElement('div');
-    tag.className = 'cap-tag';
-    tag.textContent = item.category || 'Photo';
-    const ctitle = document.createElement('div');
-    ctitle.className = 'cap-title';
-    ctitle.textContent = item.title || '';
-    cap.append(tag, ctitle);
-
+    cap.append(
+      el('div', 'cap-tag',   item.category || 'Photo'),
+      el('div', 'cap-title', item.title    || '')
+    );
     wrap.append(img, cap);
     slide.appendChild(wrap);
 
   } else if (item.type === 'video') {
-    const wrap = document.createElement('div');
+    const wrap  = document.createElement('div');
     wrap.className = 'slide-video-wrap';
     const video = document.createElement('video');
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-    const src = document.createElement('source');
+    video.muted = true; video.playsInline = true; video.preload = 'auto';
+    const src   = document.createElement('source');
     src.src  = item.mediaUrl || '';
     src.type = 'video/mp4';
     video.appendChild(src);
@@ -498,126 +468,135 @@ function makeSlide(item) {
   return slide;
 }
 
-// ── SLIDESHOW ENGINE ──────────────────────────────────────────────────────────
-function startSlideshow() {
-  stopTimer();
-  showSlide(currentIndex, true);
+// tiny helper — create element with class + textContent
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  e.className   = cls;
+  e.textContent = text;
+  return e;
 }
 
-function stopTimer() {
-  if (timer) { clearTimeout(timer); timer = null; }
-}
+// ── ACTIVATE A SLIDE ──────────────────────────────────────────────────────────
+// startTimer = true  → clear old timer and start new one
+// startTimer = false → just update visuals (used after live Firebase update)
+function activateSlide(idx, startTimer) {
+  const slides = area.querySelectorAll('.slide'); // always fresh query
+  const dots   = dotsEl.querySelectorAll('.dot');
 
-// restartTimer: if false, we just update visuals without scheduling the next slide
-function showSlide(idx, restartTimer = true) {
-  if (!slideEls.length) return;
+  if (!slides.length) return;
 
-  stopTimer();
-
-  // Deactivate ALL slides + stop all videos
-  slideEls.forEach(s => {
+  // Stop all videos, deactivate all slides
+  slides.forEach((s, i) => {
     s.classList.remove('active');
     const v = s.querySelector('video');
     if (v) { v.pause(); v.currentTime = 0; v.onended = null; }
+    if (dots[i]) dots[i].classList.remove('active');
   });
 
-  // Update dots
-  dotsEl.querySelectorAll('.dot').forEach((d, i) => {
-    d.classList.toggle('active', i === idx);
-  });
-
-  const slide = slideEls[idx];
+  // Activate target
+  const slide = slides[idx];
   if (!slide) return;
   slide.classList.add('active');
+  if (dots[idx]) dots[idx].classList.add('active');
 
-  // Info bar — transparent on media slides
-  const isMedia = (data[idx]?.type === 'image' || data[idx]?.type === 'video');
+  // Info bar style
+  const isMedia = posts[idx]?.type === 'image' || posts[idx]?.type === 'video';
   infoBar.classList.toggle('on-media', isMedia);
 
-  // Progress bar reset
+  // Progress bar
   progressBar.style.transition = 'none';
   progressBar.style.width = '0%';
 
-  if (!restartTimer) return; // used after live rebuild to just update visuals
+  if (!startTimer) return; // visuals only
+
+  stopTimer();
 
   const video = slide.querySelector('video');
   if (video) {
     video.play().catch(() => {});
-    video.onended = () => advance();
-    // Animate progress bar for video
+    video.onended = () => { current = (current + 1) % slides.length; activateSlide(current, true); };
     video.addEventListener('loadedmetadata', () => {
-      const ms = (video.duration || 10) * 1000;
-      animateBar(ms);
+      animBar((video.duration || 10) * 1000);
     }, { once: true });
     return;
   }
 
-  // Text / Image
-  const ms = Number(data[idx]?.duration) || 7000;
-  animateBar(ms);
-  timer = setTimeout(advance, ms);
+  const ms = Number(posts[idx]?.duration) || 7000;
+  animBar(ms);
+  timer = setTimeout(() => {
+    current = (current + 1) % slides.length;
+    activateSlide(current, true);
+  }, ms);
 }
 
-function animateBar(ms) {
+function animBar(ms) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     progressBar.style.transition = `width ${ms}ms linear`;
     progressBar.style.width = '100%';
   }));
 }
 
-function advance() {
-  currentIndex = (currentIndex + 1) % slideEls.length;
-  showSlide(currentIndex, true);
+function stopTimer() {
+  if (timer) { clearTimeout(timer); timer = null; }
 }
 
-function goTo(idx) {
-  currentIndex = idx;
-  showSlide(currentIndex, true);
-}
-
-// ── ARROWS ────────────────────────────────────────────────────────────────────
-document.getElementById('arrow-prev').addEventListener('click', (e) => {
+// ── ARROW BUTTONS ─────────────────────────────────────────────────────────────
+btnPrev.addEventListener('click', (e) => {
   e.stopPropagation();
-  currentIndex = (currentIndex - 1 + slideEls.length) % slideEls.length;
-  showSlide(currentIndex, true);
-});
-document.getElementById('arrow-next').addEventListener('click', (e) => {
-  e.stopPropagation();
-  currentIndex = (currentIndex + 1) % slideEls.length;
-  showSlide(currentIndex, true);
+  const len = area.querySelectorAll('.slide').length;
+  if (!len) return;
+  current = (current - 1 + len) % len;
+  activateSlide(current, true);
 });
 
-// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+btnNext.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const len = area.querySelectorAll('.slide').length;
+  if (!len) return;
+  current = (current + 1) % len;
+  activateSlide(current, true);
+});
+
+// Dot clicks
+dotsEl.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('dot')) return;
+  const dots = Array.from(dotsEl.querySelectorAll('.dot'));
+  const idx  = dots.indexOf(e.target);
+  if (idx >= 0) { current = idx; activateSlide(current, true); }
+});
+
+// Keyboard
 document.addEventListener('keydown', (e) => {
-  if (!slideEls.length) return;
-  if (e.key === 'ArrowLeft')  { currentIndex = (currentIndex - 1 + slideEls.length) % slideEls.length; showSlide(currentIndex, true); }
-  if (e.key === 'ArrowRight') { currentIndex = (currentIndex + 1) % slideEls.length; showSlide(currentIndex, true); }
+  const len = area.querySelectorAll('.slide').length;
+  if (!len) return;
+  if (e.key === 'ArrowLeft')  { current = (current - 1 + len) % len; activateSlide(current, true); }
+  if (e.key === 'ArrowRight') { current = (current + 1) % len;       activateSlide(current, true); }
 });
 
 // ── CLOCK ─────────────────────────────────────────────────────────────────────
-function updateClock() {
-  const now = new Date();
-  let h = now.getHours();
+function tick() {
+  const now  = new Date();
+  let h      = now.getHours();
   const ampm = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
   document.getElementById('clock-h').textContent    = String(h).padStart(2,'0');
   document.getElementById('clock-m').textContent    = String(now.getMinutes()).padStart(2,'0');
   document.getElementById('clock-s').textContent    = String(now.getSeconds()).padStart(2,'0');
   document.getElementById('clock-ampm').textContent = ampm;
-  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('clock-day').textContent  = DAYS[now.getDay()];
-  document.getElementById('clock-date').textContent = `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  const D = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('clock-day').textContent  = D[now.getDay()];
+  document.getElementById('clock-date').textContent = `${M[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
 }
 
 // ── MINI CALENDAR ─────────────────────────────────────────────────────────────
-function buildMiniCal() {
-  const now = new Date(), today = now.getDate();
+function buildCal() {
+  const now = new Date(), t = now.getDate();
   const DN  = ['Su','Mo','Tu','We','Th','Fr','Sa'];
   const cal = document.getElementById('mini-cal');
   cal.innerHTML = '';
   for (let off = -2; off <= 4; off++) {
-    const d = new Date(now); d.setDate(today + off);
+    const d = new Date(now); d.setDate(t + off);
     const col = document.createElement('div');
     col.className = 'cal-day-col';
     col.innerHTML = `<div class="cal-day-name">${DN[d.getDay()]}</div>
@@ -633,31 +612,28 @@ const WX = {
   '11d':'⛈️','11n':'⛈️','13d':'❄️','13n':'❄️','50d':'🌫️','50n':'🌫️'
 };
 
-async function fetchWeather() {
+async function weather() {
   try {
-    const url  = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(OWM_CITY)}&appid=${OWM_API_KEY}&units=${OWM_UNITS}`;
-    const res  = await fetch(url);
-    const json = await res.json();
-    if (json.cod !== 200) throw new Error(json.message);
-    document.getElementById('wx-icon').textContent     = WX[json.weather[0].icon] || '🌡️';
-    document.getElementById('wx-temp').textContent     = `${Math.round(json.main.temp)}°`;
-    document.getElementById('wx-desc').textContent     = json.weather[0].description;
-    document.getElementById('wx-city').textContent     = `${json.name}, ${json.sys.country}`;
-    document.getElementById('wx-humidity').textContent = `💧 ${json.main.humidity}%`;
-    document.getElementById('wx-wind').textContent     = `💨 ${Math.round(json.wind.speed * 3.6)} km/h`;
+    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(OWM_CITY)}&appid=${OWM_API_KEY}&units=${OWM_UNITS}`);
+    const j = await r.json();
+    if (j.cod !== 200) throw new Error(j.message);
+    document.getElementById('wx-icon').textContent     = WX[j.weather[0].icon] || '🌡️';
+    document.getElementById('wx-temp').textContent     = `${Math.round(j.main.temp)}°`;
+    document.getElementById('wx-desc').textContent     = j.weather[0].description;
+    document.getElementById('wx-city').textContent     = `${j.name}, ${j.sys.country}`;
+    document.getElementById('wx-humidity').textContent = `💧 ${j.main.humidity}%`;
+    document.getElementById('wx-wind').textContent     = `💨 ${Math.round(j.wind.speed * 3.6)} km/h`;
   } catch(e) {
     document.getElementById('wx-desc').textContent = 'Weather unavailable';
-    document.getElementById('wx-city').textContent = 'Check OWM_API_KEY & OWM_CITY';
-    console.warn('Weather error:', e.message);
+    document.getElementById('wx-city').textContent = 'Set OWM_API_KEY & OWM_CITY in display.html';
   }
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-setInterval(updateClock, 1000);
-updateClock();
-buildMiniCal();
-fetchWeather();
-setInterval(fetchWeather, 10 * 60 * 1000);
+setInterval(tick, 1000); tick();
+buildCal();
+weather();
+setInterval(weather, 10 * 60 * 1000);
 </script>
 </body>
 </html>
