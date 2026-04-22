@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulletin Board Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --info-h: 88px;
+      --blue:   #2563eb;
+      --sky:    #e8f4fd;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden; background: #0a0f1e;
+      font-family: 'Sora', sans-serif;
+    }
+
+    /* ── SLIDESHOW AREA ── */
+    #slideshow-area {
+      position: absolute;
+      inset: 0;
+      bottom: var(--info-h);
+      overflow: hidden;
+      background: #f0f6ff;
+    }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    .slide.active {
+      opacity: 1; visibility: visible;
+    }
+
+    /* ── SLIDE THEMES ── */
+    .slide-bg-blue   { background: linear-gradient(135deg, #e8f4fd 0%, #dbeafe 50%, #eff6ff 100%); }
+    .slide-bg-purple { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #faf5ff 100%); }
+    .slide-bg-green  { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #ecfdf5 100%); }
+    .slide-bg-amber  { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fef9c3 100%); }
+    .slide-bg-rose   { background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #fdf2f8 100%); }
+    .slide-bg-teal   { background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #ecfdf5 100%); }
+
+    /* ── TEXT SLIDE CONTENT ── */
+    .slide-inner {
+      width: 82%;
+      max-width: 1100px;
+      text-align: center;
+      padding: 60px 80px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(24px);
+      border-radius: 32px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.8),
+        0 24px 80px rgba(0,0,0,0.08);
+      animation: slideUp 0.7s cubic-bezier(.22,1,.36,1);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(32px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .slide-category {
+      display: inline-block;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 6px 20px; border-radius: 99px;
+      margin-bottom: 24px;
+    }
+
+    /* Category color per theme */
+    .slide-bg-blue   .slide-category { background: #dbeafe; color: #2563eb; }
+    .slide-bg-purple .slide-category { background: #ede9fe; color: #7c3aed; }
+    .slide-bg-green  .slide-category { background: #dcfce7; color: #16a34a; }
+    .slide-bg-amber  .slide-category { background: #fef3c7; color: #d97706; }
+    .slide-bg-rose   .slide-category { background: #ffe4e6; color: #e11d48; }
+    .slide-bg-teal   .slide-category { background: #ccfbf1; color: #0d9488; }
+
+    .slide-title {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(36px, 6vw, 80px);
+      color: #0f1b2d;
+      line-height: 1.15; margin-bottom: 24px;
+      font-weight: 700;
+    }
+
+    .slide-content {
+      font-size: clamp(18px, 2.4vw, 34px);
+      color: #3a4e6a;
+      line-height: 1.65; font-weight: 300;
+    }
+
+    /* ── IMAGE SLIDE ── */
+    .slide-image-wrap {
+      position: absolute; inset: 0;
+      overflow: hidden;
+    }
+
+    .slide-image-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .slide-image-caption {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 20px 40px 28px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.55));
+      color: white; text-align: left;
+    }
+
+    .slide-image-caption .cap-tag {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; opacity: 0.85; margin-bottom: 6px;
+    }
+
+    .slide-image-caption .cap-title {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(22px, 3.5vw, 48px);
+      font-weight: 700; line-height: 1.2;
+    }
+
+    /* ── VIDEO SLIDE ── */
+    .slide-video-wrap {
+      position: absolute; inset: 0;
+    }
+
+    .slide-video-wrap video {
+      width: 100%; height: 100%;
+      object-fit: cover; background: #000;
+    }
+
+    /* ── INFO BAR ── */
+    #info-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: var(--info-h);
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px);
+      border-top: 1.5px solid rgba(37,99,235,0.12);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 36px;
+      gap: 20px;
+      box-shadow: 0 -4px 24px rgba(37,99,235,0.07);
+    }
+
+    /* LEFT: Date + Calendar mini */
+    .info-left {
+      display: flex; align-items: center; gap: 20px;
+    }
+
+    .info-date-block { line-height: 1.3; }
+
+    .info-day {
+      font-family: 'Fraunces', serif;
+      font-size: 26px; font-weight: 700; color: #0f1b2d;
+    }
+
+    .info-date-label {
+      font-size: 12px; color: #8fa3b8; font-weight: 500; letter-spacing: 0.04em;
+    }
+
+    /* Mini calendar */
+    .mini-cal {
+      display: flex; gap: 4px;
+    }
+
+    .cal-day-col {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 3px;
+    }
+
+    .cal-day-name {
+      font-size: 9px; font-weight: 700;
+      color: #8fa3b8; text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .cal-day-num {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      color: #4a5d78;
+    }
+
+    .cal-day-num.today {
+      background: var(--blue);
+      color: white;
+    }
+
+    /* CENTER: Clock */
+    .info-center { text-align: center; }
+
+    .info-time {
+      font-family: 'Fraunces', serif;
+      font-size: 38px; font-weight: 700;
+      color: #0f1b2d; letter-spacing: -0.01em;
+      line-height: 1;
+    }
+
+    .info-seconds {
+      font-size: 22px; color: #8fa3b8; font-weight: 400;
+    }
+
+    .info-ampm {
+      font-size: 14px; color: #8fa3b8;
+      font-weight: 500; letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    /* RIGHT: Weather */
+    .info-right {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 16px;
+    }
+
+    .weather-main {
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .weather-icon { font-size: 40px; line-height: 1; }
+
+    .weather-temp {
+      font-family: 'Fraunces', serif;
+      font-size: 32px; font-weight: 700; color: #0f1b2d;
+      line-height: 1;
+    }
+
+    .weather-info { line-height: 1.4; }
+
+    .weather-desc {
+      font-size: 13px; color: #4a5d78; font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .weather-city { font-size: 11px; color: #8fa3b8; }
+
+    .weather-extras {
+      display: flex; flex-direction: column; gap: 3px;
+    }
+
+    .weather-extra-item {
+      font-size: 11px; color: #8fa3b8;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── PROGRESS BAR ── */
+    #progress-bar {
+      position: absolute; bottom: var(--info-h); left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #2563eb, #60a5fa);
+      width: 0%; z-index: 50;
+      border-radius: 0 2px 0 0;
+    }
+
+    /* ── LOADING SCREEN ── */
+    #loading-screen {
+      position: fixed; inset: 0; z-index: 999;
+      background: #f0f6ff;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+      transition: opacity 0.5s ease;
+    }
+
+    #loading-screen .load-icon {
+      font-size: 52px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    #loading-screen p {
+      font-size: 15px; color: #8fa3b8; font-weight: 500;
+    }
+
+    #loading-screen.hidden { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <div class="load-icon">📋</div>
+  <p>Loading Bulletin Board…</p>
+</div>
+
+<!-- SLIDESHOW AREA -->
+<div id="slideshow-area">
+  <!-- Slides injected here -->
+</div>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar"></div>
+
+<!-- INFO BAR -->
+<div id="info-bar">
+  <!-- LEFT: Date + Mini Calendar -->
+  <div class="info-left">
+    <div class="info-date-block">
+      <div class="info-day" id="clock-day">Monday</div>
+      <div class="info-date-label" id="clock-date">January 1, 2025</div>
+    </div>
+    <div class="mini-cal" id="mini-cal"></div>
+  </div>
+
+  <!-- CENTER: Clock -->
+  <div class="info-center">
+    <div class="info-time">
+      <span id="clock-h">12</span>:<span id="clock-m">00</span><span class="info-seconds">:<span id="clock-s">00</span></span>
+    </div>
+    <div class="info-ampm" id="clock-ampm">AM</div>
+  </div>
+
+  <!-- RIGHT: Weather -->
+  <div class="info-right">
+    <div class="weather-main">
+      <div class="weather-icon" id="wx-icon">⛅</div>
+      <div class="weather-info">
+        <div class="weather-temp" id="wx-temp">--°</div>
+        <div class="weather-desc" id="wx-desc">Loading…</div>
+        <div class="weather-city" id="wx-city"></div>
+      </div>
+    </div>
+    <div class="weather-extras">
+      <div class="weather-extra-item" id="wx-humidity">💧 --%</div>
+      <div class="weather-extra-item" id="wx-wind">💨 -- km/h</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
+  authDomain: "digitalbulletinboard-54f06.firebaseapp.com",
+  databaseURL: "https://digitalbulletinboard-54f06-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "digitalbulletinboard-54f06",
+  storageBucket: "digitalbulletinboard-54f06.firebasestorage.app",
+  messagingSenderId: "987342604782",
+  appId: "1:987342604782:web:90f8a7e895e8f8a2b026ff"
+};
+
+// ── OPENWEATHERMAP CONFIG ──────────────────────────────────────────────────
+// Replace with your own OpenWeatherMap API key
+const OWM_API_KEY = "YOUR_OPENWEATHERMAP_API_KEY";
+// Set your city (or use geolocation below)
+const OWM_CITY    = "Manila";
+const OWM_UNITS   = "metric"; // "imperial" for °F
+
+// ── FIREBASE SETUP ────────────────────────────────────────────────────────
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const postsRef = ref(db, "posts");
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let slides       = [];
+let currentIndex = 0;
+let timer        = null;
+let data         = [];
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now   = new Date();
+  let h       = now.getHours();
+  const m     = now.getMinutes();
+  const s     = now.getSeconds();
+  const ampm  = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+
+  document.getElementById('clock-h').textContent    = String(h).padStart(2,'0');
+  document.getElementById('clock-m').textContent    = String(m).padStart(2,'0');
+  document.getElementById('clock-s').textContent    = String(s).padStart(2,'0');
+  document.getElementById('clock-ampm').textContent = ampm;
+
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  document.getElementById('clock-day').textContent  = days[now.getDay()];
+  document.getElementById('clock-date').textContent =
+    `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+}
+
+// ── MINI CALENDAR ─────────────────────────────────────────────────────────
+function buildMiniCal() {
+  const now     = new Date();
+  const today   = now.getDate();
+  const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const cal     = document.getElementById('mini-cal');
+  cal.innerHTML = '';
+
+  // Show 7-day window: today - 2, today, today + 4
+  for (let offset = -2; offset <= 4; offset++) {
+    const d    = new Date(now);
+    d.setDate(today + offset);
+    const col  = document.createElement('div');
+    col.className = 'cal-day-col';
+    col.innerHTML = `
+      <div class="cal-day-name">${dayNames[d.getDay()]}</div>
+      <div class="cal-day-num ${offset === 0 ? 'today' : ''}">${d.getDate()}</div>`;
+    cal.appendChild(col);
+  }
+}
+
+// ── WEATHER ───────────────────────────────────────────────────────────────
+const wxIcons = {
+  '01d':'☀️','01n':'🌙','02d':'⛅','02n':'☁️','03d':'☁️','03n':'☁️',
+  '04d':'☁️','04n':'☁️','09d':'🌧️','09n':'🌧️','10d':'🌦️','10n':'🌧️',
+  '11d':'⛈️','11n':'⛈️','13d':'❄️','13n':'❄️','50d':'🌫️','50n':'🌫️'
+};
+
+async function fetchWeather() {
+  if (OWM_API_KEY === "YOUR_OPENWEATHERMAP_API_KEY") {
+    document.getElementById('wx-desc').textContent  = 'Set API key in display.html';
+    document.getElementById('wx-city').textContent  = '';
+    document.getElementById('wx-temp').textContent  = '--°';
+    return;
+  }
+  try {
+    const url  = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(OWM_CITY)}&appid=${OWM_API_KEY}&units=${OWM_UNITS}`;
+    const res  = await fetch(url);
+    const json = await res.json();
+    if (json.cod !== 200) throw new Error(json.message);
+    const icon = json.weather[0].icon;
+    document.getElementById('wx-icon').textContent    = wxIcons[icon] || '🌡️';
+    document.getElementById('wx-temp').textContent    = `${Math.round(json.main.temp)}°`;
+    document.getElementById('wx-desc').textContent    = json.weather[0].description;
+    document.getElementById('wx-city').textContent    = `${json.name}, ${json.sys.country}`;
+    document.getElementById('wx-humidity').textContent= `💧 ${json.main.humidity}%`;
+    document.getElementById('wx-wind').textContent    = `💨 ${Math.round(json.wind.speed * 3.6)} km/h`;
+  } catch(e) {
+    document.getElementById('wx-desc').textContent = 'Weather unavailable';
+    console.warn('Weather fetch error:', e);
+  }
+}
+
+// ── FIREBASE DATA ─────────────────────────────────────────────────────────
+onValue(postsRef, (snapshot) => {
+  data = [];
+  if (snapshot.exists()) {
+    snapshot.forEach(child => data.push(child.val()));
+  }
+  renderSlides();
+  document.getElementById('loading-screen').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('loading-screen').remove();
+  }, 600);
+});
+
+// ── RENDER SLIDES ─────────────────────────────────────────────────────────
+function renderSlides() {
+  const area = document.getElementById('slideshow-area');
+  area.innerHTML = '';
+
+  if (data.length === 0) {
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;
+        font-family:'Fraunces',serif;font-size:32px;color:#8fa3b8;text-align:center;padding:40px;">
+        <div>
+          <div style="font-size:64px;margin-bottom:16px;">📭</div>
+          No slides yet.<br>
+          <span style="font-family:'Sora',sans-serif;font-size:16px;font-weight:400">Add slides from the admin panel.</span>
+        </div>
+      </div>`;
+    slides = []; return;
+  }
+
+  data.forEach((item, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    if (i === 0) slide.classList.add('active');
+
+    if (item.type === 'text') {
+      const theme = item.bgtheme || 'blue';
+      slide.classList.add(`slide-bg-${theme}`);
+      slide.innerHTML = `
+        <div class="slide-inner">
+          <div class="slide-category">${item.category || 'Announcement'}</div>
+          <div class="slide-title">${item.title || ''}</div>
+          <div class="slide-content">${item.content || ''}</div>
+        </div>`;
+    }
+    else if (item.type === 'image') {
+      slide.classList.add('slide-bg-blue');
+      slide.innerHTML = `
+        <div class="slide-image-wrap">
+          <img src="${item.mediaUrl || ''}" alt="${item.title || ''}">
+          <div class="slide-image-caption">
+            <div class="cap-tag">${item.category || 'Photo'}</div>
+            <div class="cap-title">${item.title || ''}</div>
+          </div>
+        </div>`;
+    }
+    else if (item.type === 'video') {
+      slide.classList.add('slide-bg-blue');
+      const video = document.createElement('video');
+      video.className = 'slide-video-wrap';
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      video.innerHTML = `<source src="${item.mediaUrl || ''}" type="video/mp4">`;
+      const wrap = document.createElement('div');
+      wrap.className = 'slide-video-wrap';
+      wrap.appendChild(video);
+      slide.appendChild(wrap);
+    }
+
+    area.appendChild(slide);
+  });
+
+  slides = area.querySelectorAll('.slide');
+  currentIndex = 0;
+  startSlideshow();
+}
+
+// ── SLIDESHOW ENGINE ──────────────────────────────────────────────────────
+const progressBar = document.getElementById('progress-bar');
+
+function startSlideshow() {
+  if (timer) clearTimeout(timer);
+  showSlide(currentIndex);
+}
+
+function showSlide(idx) {
+  if (!slides.length) return;
+
+  slides.forEach((s, i) => {
+    s.classList.remove('active');
+    const v = s.querySelector('video');
+    if (v && i !== idx) { v.pause(); v.currentTime = 0; }
+  });
+
+  slides[idx].classList.add('active');
+
+  const video = slides[idx].querySelector('video');
+  if (video) {
+    video.play().catch(()=>{});
+    video.onended = () => next();
+    // No timer for videos — they advance on end
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+    return;
+  }
+
+  const duration = Number(data[idx]?.duration) || 7000;
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '0%';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      progressBar.style.transition = `width ${duration}ms linear`;
+      progressBar.style.width = '100%';
+    });
+  });
+
+  timer = setTimeout(next, duration);
+}
+
+function next() {
+  currentIndex = (currentIndex + 1) % slides.length;
+  showSlide(currentIndex);
+}
+
+// Click to advance
+document.addEventListener('click', () => {
+  if (timer) clearTimeout(timer);
+  next();
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+setInterval(updateClock, 1000);
+updateClock();
+buildMiniCal();
+fetchWeather();
+setInterval(fetchWeather, 10 * 60 * 1000); // Refresh weather every 10 min
+</script>
+</body>
+</html>
