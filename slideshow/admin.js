@@ -94,6 +94,11 @@ function getType() {
   return document.querySelector('input[name="type"]:checked').value;
 }
 
+const CLOUDINARY_CLOUD_NAME    = "dmzmkkhao";    // from your Dashboard
+const CLOUDINARY_UPLOAD_PRESET = "lckingcg"; // the preset you just created
+
+}
+
 // ─── SAVE / UPDATE POST ───────────────────────────────────────────────────────
 window.savePost = function() {
   const title    = document.getElementById("title").value.trim();
