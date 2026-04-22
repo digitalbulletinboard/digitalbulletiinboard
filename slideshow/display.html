@@ -9,364 +9,318 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --info-h: 90px;
-      --blue: #2563eb;
-    }
+    :root { --bar: 90px; --blue: #2563eb; }
 
     html, body {
       width: 100%; height: 100%;
       overflow: hidden;
-      background: #0a0f1e;
+      background: #111827;
       font-family: 'Sora', sans-serif;
     }
 
-    /* ── SLIDESHOW AREA ── */
-    #slideshow-area {
-      position: absolute;
+    /* ─── SLIDESHOW WRAPPER ─────────────────────────────────────
+       position:fixed so overflow:hidden does NOT block pointer events
+       on child arrows. Arrows sit outside the clip path of slides.   */
+    #sw {
+      position: fixed;
       top: 0; left: 0; right: 0;
-      bottom: var(--info-h);
-      overflow: hidden;
+      bottom: var(--bar);
+    }
+
+    /* ─── SLIDES (clipped container separate from arrows) ─── */
+    #slides-clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;          /* only clips the slides, NOT the arrows */
       background: #f0f6ff;
     }
 
-    /* Each slide stacked absolutely, only .active is visible */
     .slide {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.8s ease, visibility 0.8s ease;
+      transition: opacity 0.85s ease;
       z-index: 1;
+      pointer-events: none;
     }
     .slide.active {
       opacity: 1;
-      visibility: visible;
       z-index: 2;
+      pointer-events: auto;
     }
 
-    /* ── SLIDE BACKGROUNDS (text) ── */
-    .slide-bg-blue   { background: linear-gradient(135deg,#e8f4fd,#dbeafe 60%,#eff6ff); }
-    .slide-bg-purple { background: linear-gradient(135deg,#f5f3ff,#ede9fe 60%,#faf5ff); }
-    .slide-bg-green  { background: linear-gradient(135deg,#f0fdf4,#dcfce7 60%,#ecfdf5); }
-    .slide-bg-amber  { background: linear-gradient(135deg,#fffbeb,#fef3c7 60%,#fef9c3); }
-    .slide-bg-rose   { background: linear-gradient(135deg,#fff1f2,#ffe4e6 60%,#fdf2f8); }
-    .slide-bg-teal   { background: linear-gradient(135deg,#f0fdfa,#ccfbf1 60%,#ecfdf5); }
+    /* TEXT SLIDES */
+    .bg-blue   { background: linear-gradient(135deg,#e8f4fd,#dbeafe 60%,#eff6ff); }
+    .bg-purple { background: linear-gradient(135deg,#f5f3ff,#ede9fe 60%,#faf5ff); }
+    .bg-green  { background: linear-gradient(135deg,#f0fdf4,#dcfce7 60%,#ecfdf5); }
+    .bg-amber  { background: linear-gradient(135deg,#fffbeb,#fef3c7 60%,#fef9c3); }
+    .bg-rose   { background: linear-gradient(135deg,#fff1f2,#ffe4e6 60%,#fdf2f8); }
+    .bg-teal   { background: linear-gradient(135deg,#f0fdfa,#ccfbf1 60%,#ecfdf5); }
 
-    /* ── TEXT SLIDE CARD ── */
-    .slide-inner {
+    .slide-card {
       width: 80%; max-width: 1100px;
       text-align: center;
       padding: 64px 80px;
-      background: rgba(255,255,255,0.80);
+      background: rgba(255,255,255,0.82);
       backdrop-filter: blur(28px);
       border-radius: 32px;
       box-shadow: 0 0 0 1px rgba(255,255,255,0.9), 0 28px 80px rgba(0,0,0,0.09);
     }
-
-    .slide-category {
+    .s-cat {
       display: inline-block;
       font-size: 12px; font-weight: 700;
       letter-spacing: 0.14em; text-transform: uppercase;
       padding: 6px 20px; border-radius: 99px;
       margin-bottom: 22px;
     }
-
-    .slide-bg-blue   .slide-category { background:#dbeafe; color:#2563eb; }
-    .slide-bg-purple .slide-category { background:#ede9fe; color:#7c3aed; }
-    .slide-bg-green  .slide-category { background:#dcfce7; color:#16a34a; }
-    .slide-bg-amber  .slide-category { background:#fef3c7; color:#d97706; }
-    .slide-bg-rose   .slide-category { background:#ffe4e6; color:#e11d48; }
-    .slide-bg-teal   .slide-category { background:#ccfbf1; color:#0d9488; }
-
-    .slide-title {
+    .bg-blue   .s-cat { background:#dbeafe; color:#2563eb; }
+    .bg-purple .s-cat { background:#ede9fe; color:#7c3aed; }
+    .bg-green  .s-cat { background:#dcfce7; color:#16a34a; }
+    .bg-amber  .s-cat { background:#fef3c7; color:#d97706; }
+    .bg-rose   .s-cat { background:#ffe4e6; color:#e11d48; }
+    .bg-teal   .s-cat { background:#ccfbf1; color:#0d9488; }
+    .s-title {
       font-family: 'Fraunces', serif;
-      font-size: clamp(34px,5.5vw,76px);
+      font-size: clamp(32px,5.5vw,76px);
       color: #0f1b2d; line-height: 1.15;
-      margin-bottom: 22px; font-weight: 700;
+      margin-bottom: 20px; font-weight: 700;
     }
-
-    .slide-content {
-      font-size: clamp(17px,2.2vw,32px);
+    .s-body {
+      font-size: clamp(16px,2.2vw,32px);
       color: #3a4e6a; line-height: 1.7; font-weight: 300;
     }
 
-    /* ── IMAGE SLIDE ── */
-    .slide-image-wrap {
-      position: absolute; inset: 0; overflow: hidden;
-    }
-    .slide-image-wrap img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-    }
-    .slide-image-caption {
-      position: absolute; bottom: 0; left: 0; right: 0;
+    /* IMAGE SLIDE */
+    .img-wrap { position: absolute; inset: 0; overflow: hidden; }
+    .img-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+    .img-cap {
+      position: absolute; bottom:0; left:0; right:0;
       padding: 24px 48px 32px;
-      background: linear-gradient(transparent, rgba(0,0,0,0.62));
+      background: linear-gradient(transparent, rgba(0,0,0,0.65));
       color: white; text-align: left;
     }
-    .cap-tag {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; opacity: 0.8; margin-bottom: 6px;
-    }
-    .cap-title {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(22px,3.5vw,50px);
-      font-weight: 700; line-height: 1.2;
-    }
+    .cap-tag { font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; opacity:0.8; margin-bottom:5px; }
+    .cap-title { font-family:'Fraunces',serif; font-size:clamp(20px,3.5vw,48px); font-weight:700; line-height:1.2; }
 
-    /* ── VIDEO SLIDE ── */
-    .slide-video-wrap {
-      position: absolute; inset: 0;
-    }
-    .slide-video-wrap video {
-      width: 100%; height: 100%;
-      object-fit: cover; background: #000; display: block;
-    }
+    /* VIDEO SLIDE */
+    .vid-wrap { position:absolute; inset:0; }
+    .vid-wrap video { width:100%; height:100%; object-fit:cover; background:#000; display:block; }
 
-    /* ── ARROWS ── */
-    .arrow-btn {
+    /* ─── ARROWS — outside slides-clip so overflow:hidden doesn't block them ─── */
+    .arrow {
       position: absolute;
       top: 50%; transform: translateY(-50%);
-      z-index: 50;
-      width: 52px; height: 52px;
-      background: rgba(255,255,255,0.20);
-      backdrop-filter: blur(12px);
-      border: 1.5px solid rgba(255,255,255,0.40);
+      z-index: 100;                         /* well above slides */
+      width: 54px; height: 54px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255,255,255,0.38);
       border-radius: 50%;
-      color: white; font-size: 22px;
+      color: #fff; font-size: 22px;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s, transform 0.15s;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.20);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.22);
+      /* ensure clicks always register */
+      pointer-events: auto;
+      user-select: none;
     }
-    .arrow-btn:hover  { background: rgba(37,99,235,0.60); transform: translateY(-50%) scale(1.08); }
-    .arrow-btn:active { transform: translateY(-50%) scale(0.95); }
-    #arrow-prev { left: 20px; }
-    #arrow-next { right: 20px; }
+    .arrow:hover  { background: rgba(37,99,235,0.65); }
+    .arrow:active { transform: translateY(-50%) scale(0.93); }
+    #ap { left: 18px; }
+    #an { right: 18px; }
 
-    /* ── DOTS ── */
-    #slide-dots {
+    /* ─── DOTS ─── */
+    #dots {
       position: absolute;
-      bottom: 12px; left: 50%; transform: translateX(-50%);
-      z-index: 50;
+      bottom: 10px; left: 50%; transform: translateX(-50%);
+      z-index: 100;
       display: flex; gap: 7px;
       pointer-events: none;
     }
     .dot {
-      width: 8px; height: 8px;
-      border-radius: 99px;
-      background: rgba(255,255,255,0.45);
-      border: 1.5px solid rgba(255,255,255,0.65);
-      transition: all 0.3s;
-      pointer-events: all;
-      cursor: pointer;
+      width: 8px; height: 8px; border-radius: 99px;
+      background: rgba(255,255,255,0.42);
+      border: 1.5px solid rgba(255,255,255,0.6);
+      transition: all 0.3s; cursor: pointer;
+      pointer-events: auto;
     }
-    .dot.active { background: white; width: 24px; }
+    .dot.on { background: white; width: 24px; }
 
-    /* ── PROGRESS BAR ── */
-    #progress-bar {
-      position: absolute;
-      bottom: var(--info-h); left: 0;
+    /* ─── PROGRESS BAR ─── */
+    #pbar {
+      position: fixed;
+      bottom: var(--bar); left: 0;
       height: 3px;
       background: linear-gradient(90deg,#2563eb,#60a5fa);
-      width: 0%; z-index: 40;
+      width: 0%; z-index: 50;
       border-radius: 0 2px 0 0;
       pointer-events: none;
     }
 
-    /* ── INFO BAR ── */
-    #info-bar {
-      position: absolute;
+    /* ─── INFO BAR ─── */
+    #bar {
+      position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: var(--info-h);
+      height: var(--bar);
       background: rgba(255,255,255,0.96);
       backdrop-filter: blur(20px);
       border-top: 1.5px solid rgba(37,99,235,0.10);
       display: grid;
       grid-template-columns: 1fr auto 1fr auto;
       align-items: center;
-      padding: 0 32px; gap: 16px;
+      padding: 0 28px; gap: 16px;
       box-shadow: 0 -4px 24px rgba(37,99,235,0.06);
-      transition: background 0.6s, border-color 0.6s;
-      z-index: 30;
+      transition: background 0.55s, border-color 0.55s, backdrop-filter 0.55s;
+      z-index: 60;
     }
-    #info-bar.on-media {
+    #bar.media {
       background: transparent;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       border-top-color: transparent;
       box-shadow: none;
     }
-    #info-bar.on-media .info-day,
-    #info-bar.on-media .info-time,
-    #info-bar.on-media .weather-temp { color: #fff; }
-    #info-bar.on-media .info-date-label,
-    #info-bar.on-media .cal-day-name,
-    #info-bar.on-media .cal-day-num,
-    #info-bar.on-media .info-ampm,
-    #info-bar.on-media .info-seconds,
-    #info-bar.on-media .weather-desc,
-    #info-bar.on-media .weather-city,
-    #info-bar.on-media .weather-extra-item { color: rgba(255,255,255,0.75); }
-    #info-bar.on-media .cal-day-num.today { background: rgba(255,255,255,0.22); color:#fff; }
+    /* text colours swap on media */
+    #bar .day, #bar .clock, #bar .wtemp { color: #0f1b2d; transition: color 0.4s; }
+    #bar .sub, #bar .dname, #bar .dnum, #bar .ampm, #bar .sec,
+    #bar .wdesc, #bar .wcity, #bar .wextra { color: #8fa3b8; transition: color 0.4s; }
+    #bar.media .day, #bar.media .clock, #bar.media .wtemp { color: #fff; }
+    #bar.media .sub, #bar.media .dname, #bar.media .dnum, #bar.media .ampm,
+    #bar.media .sec, #bar.media .wdesc, #bar.media .wcity,
+    #bar.media .wextra { color: rgba(255,255,255,0.78); }
+    #bar.media .dnum.today { background: rgba(255,255,255,0.22) !important; color:#fff; }
 
-    /* LEFT */
-    .info-left { display: flex; align-items: center; gap: 18px; }
-    .info-date-block { line-height: 1.3; }
-    .info-day {
-      font-family: 'Fraunces', serif;
-      font-size: 24px; font-weight: 700; color: #0f1b2d;
+    /* left */
+    .bleft { display:flex; align-items:center; gap:18px; }
+    .dblock { line-height:1.3; }
+    .day { font-family:'Fraunces',serif; font-size:24px; font-weight:700; }
+    .sub { font-size:12px; font-weight:500; }
+    .mcal { display:flex; gap:5px; }
+    .dcol { display:flex; flex-direction:column; align-items:center; gap:3px; }
+    .dname { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; }
+    .dnum { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:12px; font-weight:600; }
+    .dnum.today { background:var(--blue); color:white; }
+    /* center */
+    .bcenter { text-align:center; }
+    .clock { font-family:'Fraunces',serif; font-size:36px; font-weight:700; line-height:1; }
+    .sec { font-size:20px; font-weight:400; }
+    .ampm { font-size:13px; font-weight:500; letter-spacing:0.06em; margin-top:2px; }
+    /* right */
+    .bright { display:flex; align-items:center; justify-content:flex-end; gap:14px; }
+    .wmain { display:flex; align-items:center; gap:10px; }
+    .wicon { font-size:38px; line-height:1; }
+    .wtemp { font-family:'Fraunces',serif; font-size:30px; font-weight:700; line-height:1; }
+    .winfo { line-height:1.4; }
+    .wdesc { font-size:13px; font-weight:500; text-transform:capitalize; }
+    .wcity { font-size:11px; }
+    .wexs  { display:flex; flex-direction:column; gap:3px; }
+    .wextra{ font-size:11px; display:flex; align-items:center; gap:4px; }
+    /* admin btn */
+    #abtn {
+      display:flex; align-items:center; gap:7px;
+      padding:9px 16px;
+      background:rgba(37,99,235,0.10);
+      color:#2563eb;
+      border:1.5px solid rgba(37,99,235,0.22);
+      border-radius:10px;
+      font-family:'Sora',sans-serif;
+      font-size:12px; font-weight:600;
+      cursor:pointer; text-decoration:none;
+      white-space:nowrap;
+      transition:background 0.2s,border-color 0.2s,color 0.2s;
     }
-    .info-date-label { font-size: 12px; color: #8fa3b8; font-weight: 500; }
-    .mini-cal { display: flex; gap: 5px; }
-    .cal-day-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .cal-day-name {
-      font-size: 9px; font-weight: 700;
-      color: #8fa3b8; text-transform: uppercase; letter-spacing: 0.06em;
-    }
-    .cal-day-num {
-      width: 28px; height: 28px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 8px; font-size: 12px; font-weight: 600; color: #4a5d78;
-    }
-    .cal-day-num.today { background: var(--blue); color: white; }
+    #abtn:hover { background:rgba(37,99,235,0.18); border-color:rgba(37,99,235,0.45); }
+    #bar.media #abtn { background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.30); color:white; }
+    #bar.media #abtn:hover { background:rgba(255,255,255,0.22); }
 
-    /* CENTER */
-    .info-center { text-align: center; }
-    .info-time {
-      font-family: 'Fraunces', serif;
-      font-size: 36px; font-weight: 700; color: #0f1b2d;
-      line-height: 1; letter-spacing: -0.01em;
+    /* loading */
+    #ls {
+      position:fixed; inset:0; z-index:999;
+      background:#f0f6ff;
+      display:flex; align-items:center; justify-content:center;
+      flex-direction:column; gap:14px;
+      transition:opacity 0.5s;
     }
-    .info-seconds { font-size: 20px; color: #8fa3b8; font-weight: 400; }
-    .info-ampm { font-size: 13px; color: #8fa3b8; font-weight: 500; letter-spacing: 0.06em; margin-top: 2px; }
-
-    /* RIGHT */
-    .info-right { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
-    .weather-main { display: flex; align-items: center; gap: 10px; }
-    .weather-icon { font-size: 38px; line-height: 1; }
-    .weather-temp {
-      font-family: 'Fraunces', serif;
-      font-size: 30px; font-weight: 700; color: #0f1b2d; line-height: 1;
-    }
-    .weather-info { line-height: 1.4; }
-    .weather-desc { font-size: 13px; color: #4a5d78; font-weight: 500; text-transform: capitalize; }
-    .weather-city { font-size: 11px; color: #8fa3b8; }
-    .weather-extras { display: flex; flex-direction: column; gap: 3px; }
-    .weather-extra-item { font-size: 11px; color: #8fa3b8; display: flex; align-items: center; gap: 4px; }
-
-    /* ── LOADING ── */
-    #loading-screen {
-      position: fixed; inset: 0; z-index: 999;
-      background: #f0f6ff;
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 14px;
-      transition: opacity 0.5s ease;
-    }
-    #loading-screen .load-icon { font-size: 52px; animation: pulse 1.4s ease-in-out infinite; }
+    #ls .icon { font-size:52px; animation:pulse 1.4s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-    #loading-screen p { font-size: 14px; color: #8fa3b8; font-weight: 500; }
-    #loading-screen.hidden { opacity: 0; pointer-events: none; }
-    .empty-msg { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:32px;color:#8fa3b8;text-align:center;padding:40px;z-index:5; }
-    .empty-msg small { font-family:Sora,sans-serif;font-size:16px;font-weight:400;display:block;margin-top:8px; }
-
-    /* ── ADMIN BUTTON ── */
-    #btn-admin {
-      display: flex; align-items: center; gap: 7px;
-      padding: 9px 16px;
-      background: rgba(37,99,235,0.10);
-      color: #2563eb;
-      border: 1.5px solid rgba(37,99,235,0.22);
-      border-radius: 10px;
-      font-family: 'Sora', sans-serif;
-      font-size: 12px; font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: background 0.2s, border-color 0.2s, color 0.2s;
-      letter-spacing: 0.02em;
-    }
-    #btn-admin:hover {
-      background: rgba(37,99,235,0.18);
-      border-color: rgba(37,99,235,0.45);
-    }
-    #btn-admin .btn-admin-icon { font-size: 15px; }
-
-    /* Admin button adapts when info-bar is transparent over media */
-    #info-bar.on-media #btn-admin {
-      background: rgba(255,255,255,0.12);
-      border-color: rgba(255,255,255,0.30);
-      color: white;
-    }
-    #info-bar.on-media #btn-admin:hover {
-      background: rgba(255,255,255,0.22);
+    #ls p { font-size:14px; color:#8fa3b8; font-weight:500; }
+    #ls.gone { opacity:0; pointer-events:none; }
+    .nomsg {
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Fraunces',serif; font-size:32px;
+      color:#8fa3b8; text-align:center; padding:40px; z-index:5;
     }
   </style>
 </head>
 <body>
 
-<div id="loading-screen">
-  <div class="load-icon">📋</div>
-  <p>Loading Bulletin Board…</p>
+<!-- Loading -->
+<div id="ls"><div class="icon">📋</div><p>Loading…</p></div>
+
+<!-- Slideshow wrapper: fixed, no overflow:hidden here -->
+<div id="sw">
+  <!-- Slides live in their own clipped container -->
+  <div id="slides-clip"></div>
+
+  <!-- Arrows outside the clip — pointer events always work -->
+  <button class="arrow" id="ap" title="Previous">&#8592;</button>
+  <button class="arrow" id="an" title="Next">&#8594;</button>
+
+  <!-- Dots -->
+  <div id="dots"></div>
 </div>
 
-<div id="slideshow-area">
-  <button class="arrow-btn" id="arrow-prev">&#8592;</button>
-  <button class="arrow-btn" id="arrow-next">&#8594;</button>
-  <div id="slide-dots"></div>
-</div>
+<!-- Progress bar -->
+<div id="pbar"></div>
 
-<div id="progress-bar"></div>
+<!-- Info bar -->
+<div id="bar">
+  <div class="bleft">
+    <div class="dblock">
+      <div class="day" id="cday">Thursday</div>
+      <div class="sub" id="cdate">April 23, 2026</div>
+    </div>
+    <div class="mcal" id="mcal"></div>
+  </div>
 
-<div id="info-bar">
-  <div class="info-left">
-    <div class="info-date-block">
-      <div class="info-day" id="clock-day">Thursday</div>
-      <div class="info-date-label" id="clock-date">April 23, 2026</div>
+  <div class="bcenter">
+    <div class="clock">
+      <span id="ch">12</span>:<span id="cm">00</span><span class="sec">:<span id="cs">00</span></span>
     </div>
-    <div class="mini-cal" id="mini-cal"></div>
+    <div class="ampm" id="camp">AM</div>
   </div>
-  <div class="info-center">
-    <div class="info-time">
-      <span id="clock-h">12</span>:<span id="clock-m">00</span><span class="info-seconds">:<span id="clock-s">00</span></span>
-    </div>
-    <div class="info-ampm" id="clock-ampm">AM</div>
-  </div>
-  <div class="info-right">
-    <div class="weather-main">
-      <div class="weather-icon" id="wx-icon">⛅</div>
-      <div class="weather-info">
-        <div class="weather-temp" id="wx-temp">--°</div>
-        <div class="weather-desc" id="wx-desc">Loading…</div>
-        <div class="weather-city" id="wx-city"></div>
+
+  <div class="bright">
+    <div class="wmain">
+      <div class="wicon" id="wxi">⛅</div>
+      <div class="winfo">
+        <div class="wtemp" id="wxt">--°</div>
+        <div class="wdesc" id="wxd">Loading…</div>
+        <div class="wcity" id="wxc"></div>
       </div>
     </div>
-    <div class="weather-extras">
-      <div class="weather-extra-item" id="wx-humidity">💧 --%</div>
-      <div class="weather-extra-item" id="wx-wind">💨 -- km/h</div>
+    <div class="wexs">
+      <div class="wextra" id="wxh">💧 --%</div>
+      <div class="wextra" id="wxw">💨 -- km/h</div>
     </div>
   </div>
 
-  <!-- ── ADMIN BUTTON ── -->
-  <a href="admin.html" id="btn-admin" title="Open Admin Panel">
-    <span class="btn-admin-icon">⚙️</span>
-    Admin
-  </a>
+  <a href="admin.html" id="abtn">⚙️ Admin</a>
 </div>
 
 <script type="module">
-// ── NOTE: display.html initialises Firebase directly (no firebase.js import)
-// so that auth state changes in admin.js don't redirect this page
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ─── EDIT THESE ───────────────────────────────────────────────────────────────
-const OWM_API_KEY = "f5168c305674a67a705409181a80046d"; // openweathermap.org free key
-const OWM_CITY    = "Cebu City";
-const OWM_UNITS   = "metric";   // "metric" °C  |  "imperial" °F
+/* ── CONFIG ── change these two values ────────────────────────────────────── */
+const OWM_KEY  = "f5168c305674a67a705409181a80046d";  // free at openweathermap.org
+const OWM_CITY = "Cebu City";
+const OWM_UNIT = "metric";   // metric=°C  imperial=°F
 
-const firebaseConfig = {
+const FB = {
   apiKey:            "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
   authDomain:        "digitalbulletinboard-54f06.firebaseapp.com",
   databaseURL:       "https://digitalbulletinboard-54f06-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -375,305 +329,256 @@ const firebaseConfig = {
   messagingSenderId: "987342604782",
   appId:             "1:987342604782:web:90f8a7e895e8f8a2b026ff"
 };
-// ─────────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────── */
 
-const app      = initializeApp(firebaseConfig);
-const db       = getDatabase(app);
-const postsRef = ref(db, "posts");
+const db  = getDatabase(initializeApp(FB));
 
-// ── DOM ───────────────────────────────────────────────────────────────────────
-const area        = document.getElementById('slideshow-area');
-const dotsEl      = document.getElementById('slide-dots');
-const progressBar = document.getElementById('progress-bar');
-const infoBar     = document.getElementById('info-bar');
-const btnPrev     = document.getElementById('arrow-prev');
-const btnNext     = document.getElementById('arrow-next');
+/* ── DOM refs ───────────────────────────────────────────────────────────── */
+const clip  = document.getElementById('slides-clip');
+const dotsW = document.getElementById('dots');
+const pbar  = document.getElementById('pbar');
+const bar   = document.getElementById('bar');
+const btnP  = document.getElementById('ap');
+const btnN  = document.getElementById('an');
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let posts        = [];   // data from Firebase
-let current      = 0;   // active slide index
-let timer        = null;
-let firstLoad    = true;
+/* ── State ──────────────────────────────────────────────────────────────── */
+let posts      = [];
+let idx        = 0;     // current slide index
+let tmr        = null;
+let loaded     = false; // true after first Firebase response
 
-// ── FIREBASE ──────────────────────────────────────────────────────────────────
-onValue(postsRef, (snapshot) => {
+/* ── Firebase ───────────────────────────────────────────────────────────── */
+onValue(ref(db, 'posts'), snap => {
+  /* Save key of slide showing BEFORE overwriting posts array */
+  const prevKey = posts[idx]?._key ?? null;
+
   posts = [];
-  if (snapshot.exists()) {
-    snapshot.forEach(c => posts.push({ _key: c.key, ...c.val() }));
-  }
+  if (snap.exists()) snap.forEach(c => posts.push({ _key: c.key, ...c.val() }));
 
-  if (firstLoad) {
-    firstLoad = false;
-    current = 0;
-    buildDOM();
-    dismissLoader();
+  rebuild();
+
+  if (!loaded) {
+    loaded = true;
+    idx = 0;
+    go(0);
+    /* fade out loader */
+    const ls = document.getElementById('ls');
+    if (ls) { ls.classList.add('gone'); setTimeout(() => ls.remove(), 600); }
   } else {
-    // Live update from admin — rebuild but stay on same key if possible
-    const prevKey = posts[current]?._key;
-    buildDOM();
-    const idx = posts.findIndex(p => p._key === prevKey);
-    current = idx >= 0 ? idx : 0;
-    activateSlide(current, false); // just switch visuals, keep existing timer
+    /* live update — stay on same slide key */
+    const ni = posts.findIndex(p => p._key === prevKey);
+    idx = ni >= 0 ? ni : 0;
+    go(idx); /* restart timer from current slide after rebuild */
   }
 });
 
-function dismissLoader() {
-  const el = document.getElementById('loading-screen');
-  if (el) { el.classList.add('hidden'); setTimeout(() => el.remove(), 600); }
-}
+/* ── Rebuild slide DOM ──────────────────────────────────────────────────── */
+function rebuild() {
+  clip.querySelectorAll('.slide,.nomsg').forEach(e => e.remove());
+  dotsW.innerHTML = '';
 
-// ── BUILD ALL SLIDE ELEMENTS ──────────────────────────────────────────────────
-function buildDOM() {
-  // Remove old slides
-  area.querySelectorAll('.slide').forEach(s => s.remove());
-  dotsEl.innerHTML = '';
-
-  if (posts.length === 0) {
-    btnPrev.style.display = 'none';
-    btnNext.style.display = 'none';
-    const empty = document.createElement('div');
-    empty.className = 'empty-msg';
-    empty.innerHTML = '<div>📭<br>No slides yet.<br><small>Add slides from the admin panel.</small></div>';
-    area.insertBefore(empty, btnPrev);
-    stopTimer();
+  if (!posts.length) {
+    btnP.style.visibility = 'hidden';
+    btnN.style.visibility = 'hidden';
+    const m = document.createElement('div');
+    m.className = 'nomsg';
+    m.innerHTML = '📭<br>No slides yet.<br><small style="font-family:Sora,sans-serif;font-size:16px">Add slides from admin panel.</small>';
+    clip.appendChild(m);
+    kill();
     return;
   }
 
-  area.querySelectorAll('.empty-msg').forEach(e => e.remove());
-  btnPrev.style.display = '';
-  btnNext.style.display = '';
+  btnP.style.visibility = '';
+  btnN.style.visibility = '';
 
-  posts.forEach((item, i) => {
-    // ── slide element ──
-    const slide = makeSlideEl(item);
-    slide.dataset.key = item._key;
-    // Insert before arrows so arrows stay on top
-    area.insertBefore(slide, btnPrev);
-
-    // ── dot ──
-    const dot = document.createElement('span');
-    dot.className = 'dot';
-    dotsEl.appendChild(dot);
+  posts.forEach((p, i) => {
+    clip.appendChild(mkSlide(p, i));
+    const d = document.createElement('span');
+    d.className = 'dot';
+    d.dataset.i = i;
+    dotsW.appendChild(d);
   });
-
-  // Clamp index
-  if (current >= posts.length) current = 0;
-  // Begin cycle
-  stopTimer();
-  activateSlide(current, true);
 }
 
-function makeSlideEl(item) {
-  const slide = document.createElement('div');
-  slide.className = 'slide';
+function mkSlide(p, i) {
+  const s = document.createElement('div');
+  s.className = 'slide';
+  s.dataset.i = i;
 
-  if (item.type === 'text') {
-    slide.classList.add('slide-bg-' + (item.bgtheme || 'blue'));
-    const inner = document.createElement('div');
-    inner.className = 'slide-inner';
-    const cat  = el('div', 'slide-category', item.category || 'Announcement');
-    const ttl  = el('div', 'slide-title',    item.title    || '');
-    const cnt  = el('div', 'slide-content',  item.content  || '');
-    inner.append(cat, ttl, cnt);
-    slide.appendChild(inner);
-
-  } else if (item.type === 'image') {
-    const wrap = document.createElement('div');
-    wrap.className = 'slide-image-wrap';
-    const img  = document.createElement('img');
-    img.src    = item.mediaUrl || '';
-    img.alt    = item.title   || '';
-    const cap  = document.createElement('div');
-    cap.className = 'slide-image-caption';
-    cap.append(
-      el('div', 'cap-tag',   item.category || 'Photo'),
-      el('div', 'cap-title', item.title    || '')
+  if (p.type === 'text') {
+    s.classList.add('bg-' + (p.bgtheme || 'blue'));
+    const card = mk('div','slide-card');
+    card.append(
+      txt('div','s-cat',   p.category || 'Announcement'),
+      txt('div','s-title', p.title    || ''),
+      txt('div','s-body',  p.content  || '')
     );
-    wrap.append(img, cap);
-    slide.appendChild(wrap);
+    s.appendChild(card);
 
-  } else if (item.type === 'video') {
-    const wrap  = document.createElement('div');
-    wrap.className = 'slide-video-wrap';
-    const video = document.createElement('video');
-    video.muted = true; video.playsInline = true; video.preload = 'auto';
-    const src   = document.createElement('source');
-    src.src  = item.mediaUrl || '';
-    src.type = 'video/mp4';
-    video.appendChild(src);
-    wrap.appendChild(video);
-    slide.appendChild(wrap);
+  } else if (p.type === 'image') {
+    const w = mk('div','img-wrap');
+    const img = document.createElement('img');
+    img.src = p.mediaUrl || ''; img.alt = p.title || '';
+    const cap = mk('div','img-cap');
+    cap.append(txt('div','cap-tag',   p.category || 'Photo'),
+               txt('div','cap-title', p.title    || ''));
+    w.append(img, cap);
+    s.appendChild(w);
+
+  } else if (p.type === 'video') {
+    const w = mk('div','vid-wrap');
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const src = document.createElement('source');
+    src.src = p.mediaUrl || ''; src.type = 'video/mp4';
+    v.appendChild(src); w.appendChild(v); s.appendChild(w);
   }
 
-  return slide;
+  return s;
 }
 
-// tiny helper — create element with class + textContent
-function el(tag, cls, text) {
-  const e = document.createElement(tag);
-  e.className   = cls;
-  e.textContent = text;
-  return e;
-}
+/* helpers */
+function mk(tag, cls) { const e = document.createElement(tag); e.className = cls; return e; }
+function txt(tag, cls, t) { const e = mk(tag,cls); e.textContent = t; return e; }
 
-// ── ACTIVATE A SLIDE ──────────────────────────────────────────────────────────
-// startTimer = true  → clear old timer and start new one
-// startTimer = false → just update visuals (used after live Firebase update)
-function activateSlide(idx, startTimer) {
-  const slides = area.querySelectorAll('.slide'); // always fresh query
-  const dots   = dotsEl.querySelectorAll('.dot');
-
+/* ── Show a slide ───────────────────────────────────────────────────────── */
+function go(i) {
+  const slides = clip.querySelectorAll('.slide');
+  const ddots  = dotsW.querySelectorAll('.dot');
   if (!slides.length) return;
 
-  // Stop all videos, deactivate all slides
-  slides.forEach((s, i) => {
+  kill(); /* always clear timer before doing anything */
+
+  /* clamp */
+  i = ((i % slides.length) + slides.length) % slides.length;
+  idx = i;
+
+  /* deactivate all + stop every video */
+  slides.forEach((s, si) => {
     s.classList.remove('active');
+    ddots[si]?.classList.remove('on');
     const v = s.querySelector('video');
     if (v) { v.pause(); v.currentTime = 0; v.onended = null; }
-    if (dots[i]) dots[i].classList.remove('active');
   });
 
-  // Activate target
-  const slide = slides[idx];
-  if (!slide) return;
+  /* activate target */
+  const slide = slides[i];
   slide.classList.add('active');
-  if (dots[idx]) dots[idx].classList.add('active');
+  ddots[i]?.classList.add('on');
 
-  // Info bar style
-  const isMedia = posts[idx]?.type === 'image' || posts[idx]?.type === 'video';
-  infoBar.classList.toggle('on-media', isMedia);
+  /* info bar style */
+  const type = posts[i]?.type;
+  bar.classList.toggle('media', type === 'image' || type === 'video');
 
-  // Progress bar
-  progressBar.style.transition = 'none';
-  progressBar.style.width = '0%';
+  /* progress bar reset */
+  pbar.style.transition = 'none';
+  pbar.style.width = '0%';
 
-  if (!startTimer) return; // visuals only
-
-  stopTimer();
-
-  const video = slide.querySelector('video');
-  if (video) {
-    video.play().catch(() => {});
-    video.onended = () => { current = (current + 1) % slides.length; activateSlide(current, true); };
-    video.addEventListener('loadedmetadata', () => {
-      animBar((video.duration || 10) * 1000);
+  /* video slide */
+  const vid = slide.querySelector('video');
+  if (vid) {
+    vid.play().catch(() => {});
+    vid.onended = () => go(idx + 1);
+    vid.addEventListener('loadedmetadata', () => {
+      bar2((vid.duration || 10) * 1000);
     }, { once: true });
     return;
   }
 
-  const ms = Number(posts[idx]?.duration) || 7000;
-  animBar(ms);
-  timer = setTimeout(() => {
-    current = (current + 1) % slides.length;
-    activateSlide(current, true);
-  }, ms);
+  /* text / image slide */
+  const ms = Number(posts[i]?.duration) || 7000;
+  bar2(ms);
+  tmr = setTimeout(() => go(idx + 1), ms);
 }
 
-function animBar(ms) {
+function bar2(ms) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    progressBar.style.transition = `width ${ms}ms linear`;
-    progressBar.style.width = '100%';
+    pbar.style.transition = `width ${ms}ms linear`;
+    pbar.style.width = '100%';
   }));
 }
 
-function stopTimer() {
-  if (timer) { clearTimeout(timer); timer = null; }
+function kill() {
+  if (tmr) { clearTimeout(tmr); tmr = null; }
 }
 
-// ── ARROW BUTTONS ─────────────────────────────────────────────────────────────
-btnPrev.addEventListener('click', (e) => {
-  e.stopPropagation();
-  const len = area.querySelectorAll('.slide').length;
-  if (!len) return;
-  current = (current - 1 + len) % len;
-  activateSlide(current, true);
+/* ── Arrow buttons ──────────────────────────────────────────────────────── */
+btnP.addEventListener('click', e => { e.stopPropagation(); go(idx - 1); });
+btnN.addEventListener('click', e => { e.stopPropagation(); go(idx + 1); });
+
+/* ── Dot clicks ─────────────────────────────────────────────────────────── */
+dotsW.addEventListener('click', e => {
+  const i = parseInt(e.target.dataset.i);
+  if (!isNaN(i)) go(i);
 });
 
-btnNext.addEventListener('click', (e) => {
-  e.stopPropagation();
-  const len = area.querySelectorAll('.slide').length;
-  if (!len) return;
-  current = (current + 1) % len;
-  activateSlide(current, true);
+/* ── Keyboard ───────────────────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  go(idx - 1);
+  if (e.key === 'ArrowRight') go(idx + 1);
 });
 
-// Dot clicks
-dotsEl.addEventListener('click', (e) => {
-  if (!e.target.classList.contains('dot')) return;
-  const dots = Array.from(dotsEl.querySelectorAll('.dot'));
-  const idx  = dots.indexOf(e.target);
-  if (idx >= 0) { current = idx; activateSlide(current, true); }
-});
-
-// Keyboard
-document.addEventListener('keydown', (e) => {
-  const len = area.querySelectorAll('.slide').length;
-  if (!len) return;
-  if (e.key === 'ArrowLeft')  { current = (current - 1 + len) % len; activateSlide(current, true); }
-  if (e.key === 'ArrowRight') { current = (current + 1) % len;       activateSlide(current, true); }
-});
-
-// ── CLOCK ─────────────────────────────────────────────────────────────────────
+/* ── Clock ──────────────────────────────────────────────────────────────── */
 function tick() {
-  const now  = new Date();
-  let h      = now.getHours();
-  const ampm = h >= 12 ? 'PM' : 'AM';
+  const n = new Date();
+  let h = n.getHours();
+  const ap = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
-  document.getElementById('clock-h').textContent    = String(h).padStart(2,'0');
-  document.getElementById('clock-m').textContent    = String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('clock-s').textContent    = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('clock-ampm').textContent = ampm;
+  document.getElementById('ch').textContent   = String(h).padStart(2,'0');
+  document.getElementById('cm').textContent   = String(n.getMinutes()).padStart(2,'0');
+  document.getElementById('cs').textContent   = String(n.getSeconds()).padStart(2,'0');
+  document.getElementById('camp').textContent = ap;
   const D = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('clock-day').textContent  = D[now.getDay()];
-  document.getElementById('clock-date').textContent = `${M[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  document.getElementById('cday').textContent  = D[n.getDay()];
+  document.getElementById('cdate').textContent = `${M[n.getMonth()]} ${n.getDate()}, ${n.getFullYear()}`;
 }
 
-// ── MINI CALENDAR ─────────────────────────────────────────────────────────────
+/* ── Mini calendar ──────────────────────────────────────────────────────── */
 function buildCal() {
   const now = new Date(), t = now.getDate();
-  const DN  = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-  const cal = document.getElementById('mini-cal');
+  const DN = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const cal = document.getElementById('mcal');
   cal.innerHTML = '';
   for (let off = -2; off <= 4; off++) {
     const d = new Date(now); d.setDate(t + off);
     const col = document.createElement('div');
-    col.className = 'cal-day-col';
-    col.innerHTML = `<div class="cal-day-name">${DN[d.getDay()]}</div>
-      <div class="cal-day-num${off===0?' today':''}">${d.getDate()}</div>`;
+    col.className = 'dcol';
+    const dn = document.createElement('div'); dn.className='dname'; dn.textContent=DN[d.getDay()];
+    const dd = document.createElement('div'); dd.className='dnum'+(off===0?' today':''); dd.textContent=d.getDate();
+    col.append(dn, dd);
     cal.appendChild(col);
   }
 }
 
-// ── WEATHER ───────────────────────────────────────────────────────────────────
-const WX = {
+/* ── Weather ────────────────────────────────────────────────────────────── */
+const WXMAP = {
   '01d':'☀️','01n':'🌙','02d':'⛅','02n':'☁️','03d':'☁️','03n':'☁️',
   '04d':'☁️','04n':'☁️','09d':'🌧️','09n':'🌧️','10d':'🌦️','10n':'🌧️',
   '11d':'⛈️','11n':'⛈️','13d':'❄️','13n':'❄️','50d':'🌫️','50n':'🌫️'
 };
-
-async function weather() {
+async function wxFetch() {
   try {
-    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(OWM_CITY)}&appid=${OWM_API_KEY}&units=${OWM_UNITS}`);
+    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(OWM_CITY)}&appid=${OWM_KEY}&units=${OWM_UNIT}`);
     const j = await r.json();
     if (j.cod !== 200) throw new Error(j.message);
-    document.getElementById('wx-icon').textContent     = WX[j.weather[0].icon] || '🌡️';
-    document.getElementById('wx-temp').textContent     = `${Math.round(j.main.temp)}°`;
-    document.getElementById('wx-desc').textContent     = j.weather[0].description;
-    document.getElementById('wx-city').textContent     = `${j.name}, ${j.sys.country}`;
-    document.getElementById('wx-humidity').textContent = `💧 ${j.main.humidity}%`;
-    document.getElementById('wx-wind').textContent     = `💨 ${Math.round(j.wind.speed * 3.6)} km/h`;
+    document.getElementById('wxi').textContent = WXMAP[j.weather[0].icon] || '🌡️';
+    document.getElementById('wxt').textContent = `${Math.round(j.main.temp)}°`;
+    document.getElementById('wxd').textContent = j.weather[0].description;
+    document.getElementById('wxc').textContent = `${j.name}, ${j.sys.country}`;
+    document.getElementById('wxh').textContent = `💧 ${j.main.humidity}%`;
+    document.getElementById('wxw').textContent = `💨 ${Math.round(j.wind.speed*3.6)} km/h`;
   } catch(e) {
-    document.getElementById('wx-desc').textContent = 'Weather unavailable';
-    document.getElementById('wx-city').textContent = 'Set OWM_API_KEY & OWM_CITY in display.html';
+    document.getElementById('wxd').textContent = 'Weather unavailable';
+    document.getElementById('wxc').textContent = 'Set OWM_KEY & OWM_CITY';
   }
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+/* ── Init ───────────────────────────────────────────────────────────────── */
 setInterval(tick, 1000); tick();
 buildCal();
-weather();
-setInterval(weather, 10 * 60 * 1000);
+wxFetch();
+setInterval(wxFetch, 10*60*1000);
 </script>
 </body>
 </html>
