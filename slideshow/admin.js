@@ -162,6 +162,7 @@ window.savePost = async function () {
     alert("Save failed: " + err.message);
   } finally {
     btn.disabled = false;
+    document.getElementById("save-btn-text").textContent = editingId ? "Update Slide" : "Save Slide";
   }
 };
 
