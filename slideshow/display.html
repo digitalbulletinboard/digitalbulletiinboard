@@ -25,6 +25,8 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       bottom: var(--bar);
+      height: calc(100vh - var(--bar));  /* explicit height so arrow top:50% works */
+      z-index: 10;                        /* above pbar(50)? No — arrows need z above bar */
     }
 
     /* ─── SLIDES (clipped container separate from arrows) ─── */
@@ -110,7 +112,7 @@
     .arrow {
       position: absolute;
       top: 50%; transform: translateY(-50%);
-      z-index: 100;                         /* well above slides */
+      z-index: 200;                        /* above bar(60), pbar(50), slides(2) */
       width: 54px; height: 54px;
       background: rgba(255,255,255,0.18);
       backdrop-filter: blur(10px);
@@ -121,7 +123,6 @@
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s, transform 0.15s;
       box-shadow: 0 4px 20px rgba(0,0,0,0.22);
-      /* ensure clicks always register */
       pointer-events: auto;
       user-select: none;
     }
@@ -133,8 +134,8 @@
     /* ─── DOTS ─── */
     #dots {
       position: absolute;
-      bottom: 10px; left: 50%; transform: translateX(-50%);
-      z-index: 100;
+      bottom: 14px; left: 50%; transform: translateX(-50%);
+      z-index: 150;
       display: flex; gap: 7px;
       pointer-events: none;
     }
@@ -458,7 +459,12 @@ function go(i) {
     s.classList.remove('active');
     ddots[si]?.classList.remove('on');
     const v = s.querySelector('video');
-    if (v) { v.pause(); v.currentTime = 0; v.onended = null; }
+    if (v) {
+      v.pause();
+      v.currentTime = 0;
+      v.onended = null;
+      /* remove any pending loadedmetadata listeners by cloning */
+    }
   });
 
   /* activate target */
@@ -477,11 +483,26 @@ function go(i) {
   /* video slide */
   const vid = slide.querySelector('video');
   if (vid) {
-    vid.play().catch(() => {});
+    /* Reset progress bar */
+    pbar.style.transition = 'none';
+    pbar.style.width = '0%';
     vid.onended = () => go(idx + 1);
-    vid.addEventListener('loadedmetadata', () => {
-      bar2((vid.duration || 10) * 1000);
-    }, { once: true });
+
+    const startVideo = () => {
+      vid.play().catch(() => {});
+      const dur = (isFinite(vid.duration) && vid.duration > 0) ? vid.duration : 10;
+      bar2(dur * 1000);
+      /* fallback timer in case video never fires ended */
+      tmr = setTimeout(() => go(idx + 1), dur * 1000 + 500);
+    };
+
+    if (vid.readyState >= 1) {
+      startVideo();
+    } else {
+      vid.addEventListener('loadedmetadata', startVideo, { once: true });
+      /* if metadata never loads within 3s, advance anyway */
+      tmr = setTimeout(() => { vid.removeEventListener('loadedmetadata', startVideo); go(idx + 1); }, 10000);
+    }
     return;
   }
 
@@ -516,6 +537,12 @@ dotsW.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft')  go(idx - 1);
   if (e.key === 'ArrowRight') go(idx + 1);
+  if (e.key === ' ') { e.preventDefault(); go(idx + 1); }
+});
+
+/* ── Click anywhere on slide area to advance ────────────────────────────── */
+document.getElementById('slides-clip').addEventListener('click', e => {
+  go(idx + 1);
 });
 
 /* ── Clock ──────────────────────────────────────────────────────────────── */
