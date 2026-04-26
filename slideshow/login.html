@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — Bulletin Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky:    #e8f4fd;
+      --white:  #ffffff;
+      --ink:    #0f1b2d;
+      --slate:  #4a5d78;
+      --muted:  #8fa3b8;
+      --border: #d6e4f0;
+      --blue:   #2563eb;
+      --blue-l: #dbeafe;
+      --blue-d: #1d4ed8;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --amber:  #d97706;
+      --r: 16px;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--sky);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative background shapes */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    body::before {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%);
+      top: -200px; right: -200px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(99,179,237,0.10) 0%, transparent 70%);
+      bottom: -100px; left: -100px;
+    }
+
+    .bg-dots {
+      position: fixed; inset: 0; pointer-events: none;
+      background-image: radial-gradient(circle, rgba(37,99,235,0.06) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 460px;
+      padding: 20px;
+      animation: rise 0.5s cubic-bezier(.22,1,.36,1);
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 28px;
+      padding: 44px 40px 36px;
+      box-shadow:
+        0 0 0 1px var(--border),
+        0 20px 60px rgba(37,99,235,0.10),
+        0 4px 16px rgba(0,0,0,0.05);
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .brand-icon {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+      border-radius: 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(37,99,235,0.30);
+    }
+
+    .brand-icon svg { width: 36px; height: 36px; fill: white; }
+
+    .brand h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--ink); line-height: 1.1;
+    }
+
+    .brand p {
+      font-size: 13px; color: var(--muted);
+      margin-top: 5px; font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .tabs {
+      display: flex;
+      background: var(--sky);
+      border-radius: 12px;
+      padding: 4px; gap: 4px;
+      margin-bottom: 28px;
+    }
+
+    .tab {
+      flex: 1; padding: 10px 14px;
+      border: none; background: transparent;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer;
+      border-radius: 9px; transition: all 0.2s;
+    }
+
+    .tab.on {
+      background: var(--white);
+      color: var(--blue);
+      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(37,99,235,0.12);
+    }
+
+    .form { display: none; }
+    .form.on { display: block; }
+
+    .field { margin-bottom: 18px; }
+
+    .field label {
+      display: block;
+      font-size: 11px; font-weight: 700;
+      color: var(--slate);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
+    }
+
+    .field input, .field textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      font-family: 'Sora', sans-serif;
+      font-size: 14px; color: var(--ink);
+      background: #fafcff;
+      outline: none; transition: all 0.2s;
+    }
+
+    .field textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
+
+    .field input:focus, .field textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3.5px rgba(37,99,235,0.10);
+      background: white;
+    }
+
+    .msg {
+      min-height: 24px; font-size: 13px; font-weight: 500;
+      text-align: center; padding: 6px 12px;
+      margin-bottom: 10px; border-radius: 10px;
+    }
+    .msg.ok   { color: var(--green); background: #f0fdf4; }
+    .msg.err  { color: var(--red);   background: #fef2f2; }
+    .msg.warn { color: var(--amber); background: #fffbeb; }
+
+    .btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--blue) 0%, #3b82f6 100%);
+      color: white; border: none;
+      border-radius: var(--r);
+      font-family: 'Sora', sans-serif;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.01em;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.25);
+    }
+
+    .btn:hover { background: linear-gradient(135deg, var(--blue-d) 0%, var(--blue) 100%); box-shadow: 0 6px 20px rgba(37,99,235,0.32); transform: translateY(-1px); }
+    .btn:active { transform: scale(0.98) translateY(0); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .help-toggle {
+      text-align: center; margin-top: 18px;
+      font-size: 12px; color: var(--muted);
+      cursor: pointer;
+    }
+    .help-toggle:hover { color: var(--blue); }
+
+    .help-box {
+      display: none; margin-top: 12px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 14px;
+      padding: 16px 18px;
+      font-size: 12px; color: #78350f; line-height: 1.8;
+    }
+    .help-box.open { display: block; }
+    .help-box b { display: block; margin-bottom: 8px; font-size: 13px; }
+    .help-box ol { padding-left: 18px; }
+    .help-box li { margin-bottom: 4px; }
+    .help-box code { background: rgba(0,0,0,0.07); padding: 1px 4px; border-radius: 4px; font-size: 11px; }
+  </style>
+</head>
+<body>
+<div class="bg-dots"></div>
+<div class="wrap">
+  <div class="card">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+      </div>
+      <h1>Bulletin Board</h1>
+      <p>Digital Slideshow System</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" id="t-login"    onclick="sw('login')">Sign In</button>
+      <button class="tab"    id="t-register" onclick="sw('register')">Request Access</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="form on" id="f-login">
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="l-email" placeholder="admin@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="msg" id="l-msg"></div>
+      <button class="btn" id="l-btn" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="form" id="f-register">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="r-name" placeholder="Your full name">
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="r-email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="r-pass" placeholder="Min. 6 characters">
+      </div>
+      <div class="field">
+        <label>Why do you need access?</label>
+        <textarea id="r-reason" placeholder="Brief reason for needing admin access..."></textarea>
+      </div>
+      <div class="msg" id="r-msg"></div>
+      <button class="btn" id="r-btn" onclick="doRegister()">Submit Request</button>
+    </div>
+
+    <div class="help-toggle" onclick="document.getElementById('hbox').classList.toggle('open')">
+      ⚠️ Can't sign in? Click for troubleshooting help
+    </div>
+    <div class="help-box" id="hbox">
+      <b>Common login issues:</b>
+      <ol>
+        <li><b>Realtime Database not created</b> — Firebase Console → Build → Realtime Database → Create database</li>
+        <li><b>Authentication not enabled</b> — Firebase Console → Authentication → Enable Email/Password</li>
+        <li><b>First admin not approved</b> — After registering, go to Realtime Database → users → your UID → set <code>status</code> to <code>"approved"</code></li>
+        <li><b>Database rules too strict</b> — Set rules to allow authenticated read/write</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, set, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBOm8OKOhHd_PCf8FeRkkscffne81MAaFc",
+  authDomain: "digitalbulletinboard-54f06.firebaseapp.com",
+  databaseURL: "https://digitalbulletinboard-54f06-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "digitalbulletinboard-54f06",
+  storageBucket: "digitalbulletinboard-54f06.firebasestorage.app",
+  messagingSenderId: "987342604782",
+  appId: "1:987342604782:web:90f8a7e895e8f8a2b026ff"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+window.sw = function(tab) {
+  ['login','register'].forEach(t => {
+    document.getElementById('f-'+t).classList.toggle('on', t===tab);
+    document.getElementById('t-'+t).classList.toggle('on', t===tab);
+  });
+};
+
+window.doLogin = async function() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  const msg   = document.getElementById('l-msg');
+  const btn   = document.getElementById('l-btn');
+  msg.className='msg'; msg.textContent='';
+  if (!email || !pass) { msg.className='msg err'; msg.textContent='Please enter your email and password.'; return; }
+  btn.disabled=true; btn.textContent='Signing in…';
+  try {
+    let cred;
+    try { cred = await signInWithEmailAndPassword(auth, email, pass); }
+    catch(e) { msg.className='msg err'; msg.textContent=errMsg(e.code); btn.disabled=false; btn.textContent='Sign In'; return; }
+    btn.textContent='Checking access…';
+    let snap;
+    try {
+      const timeout = new Promise((_,r) => setTimeout(()=>r(new Error('TIMEOUT')),8000));
+      snap = await Promise.race([get(ref(db,'users/'+cred.user.uid)), timeout]);
+    } catch(e) {
+      await signOut(auth); btn.disabled=false; btn.textContent='Sign In';
+      msg.className='msg err';
+      msg.textContent = e.message==='TIMEOUT'
+        ? '⚠️ Database unreachable. Check Firebase console setup.'
+        : 'Database error: '+e.message;
+      return;
+    }
+    if (!snap.exists()) {
+      await signOut(auth); btn.disabled=false; btn.textContent='Sign In';
+      msg.className='msg warn'; msg.textContent='No record found. If first admin, approve yourself in Firebase DB console.'; return;
+    }
+    const s = snap.val().status;
+    if (s==='pending')  { await signOut(auth); btn.disabled=false; btn.textContent='Sign In'; msg.className='msg warn'; msg.textContent='⏳ Access request pending approval.'; return; }
+    if (s==='rejected') { await signOut(auth); btn.disabled=false; btn.textContent='Sign In'; msg.className='msg err';  msg.textContent='❌ Access rejected. Contact administrator.'; return; }
+    if (s==='approved') { window.location.href='admin.html'; return; }
+    await signOut(auth); btn.disabled=false; btn.textContent='Sign In';
+    msg.className='msg err'; msg.textContent='Unknown status: "'+s+'". Contact admin.';
+  } catch(e) {
+    try{await signOut(auth);}catch(_){}
+    msg.className='msg err'; msg.textContent=errMsg(e.code)||e.message;
+    btn.disabled=false; btn.textContent='Sign In';
+  }
+};
+
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+window.doRegister = async function() {
+  const name   = document.getElementById('r-name').value.trim();
+  const email  = document.getElementById('r-email').value.trim();
+  const pass   = document.getElementById('r-pass').value;
+  const reason = document.getElementById('r-reason').value.trim();
+  const msg    = document.getElementById('r-msg');
+  const btn    = document.getElementById('r-btn');
+  msg.className='msg'; msg.textContent='';
+  if (!name||!email||!pass||!reason) { msg.className='msg err'; msg.textContent='Please fill in all fields.'; return; }
+  if (pass.length<6)                 { msg.className='msg err'; msg.textContent='Password must be at least 6 characters.'; return; }
+  btn.disabled=true; btn.textContent='Submitting…';
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    const uid  = cred.user.uid;
+    const payload = { name, email, reason, status:'pending', requestedAt: Date.now() };
+    await set(ref(db,'users/'+uid), payload);
+    await set(ref(db,'notifications/'+uid), { ...payload, type:'access_request', notifStatus:'unread' });
+    await signOut(auth);
+    msg.className='msg ok'; msg.textContent='✅ Request submitted! An admin will review it soon.';
+    ['r-name','r-email','r-pass','r-reason'].forEach(id => document.getElementById(id).value='');
+    btn.disabled=false; btn.textContent='Submit Request';
+  } catch(e) {
+    msg.className='msg err'; msg.textContent=errMsg(e.code);
+    btn.disabled=false; btn.textContent='Submit Request';
+  }
+};
+
+function errMsg(code) {
+  return ({
+    'auth/email-already-in-use': 'This email is already registered.',
+    'auth/invalid-email':        'Please enter a valid email address.',
+    'auth/weak-password':        'Password must be at least 6 characters.',
+    'auth/user-not-found':       'No account found with that email.',
+    'auth/wrong-password':       'Incorrect password.',
+    'auth/invalid-credential':   'Incorrect email or password.',
+    'auth/too-many-requests':    'Too many attempts. Please wait and try again.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+  })[code] || 'Error: '+code;
+}
+</script>
+</body>
+</html>

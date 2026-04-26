@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Bulletin Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-brand">
+    <span class="nav-icon">📋</span>
+    <span class="nav-title">Bulletin Board <em>Admin</em></span>
+  </div>
+  <div class="nav-actions">
+    <span class="user-label" id="user-label">Loading…</span>
+    <a href="display.html" target="_blank" class="btn-display">🖥 View Display</a>
+    <button class="bell-btn" onclick="toggleNotifications()" title="Access Requests">
+      🔔<span class="badge" id="badge" style="display:none">0</span>
+    </button>
+    <button class="btn-logout" onclick="logoutUser()">Sign Out</button>
+  </div>
+</nav>
+<div class="overlay" id="overlay" onclick="toggleNotifications()"></div>
+<aside class="notif-panel" id="notif-panel">
+  <div class="notif-header">
+    <h3>🔔 Access Requests</h3>
+    <button class="close-btn" onclick="toggleNotifications()">✕</button>
+  </div>
+  <div id="notif-list"><p class="empty-state">Loading…</p></div>
+</aside>
+<div class="main-layout">
+  <div class="form-panel">
+    <div class="section-title"><span id="form-mode-label">✨ New Slide</span></div>
+    <div class="form-grid">
+      <div class="input-group full">
+        <label>Slide Type</label>
+        <div class="type-selector">
+          <label class="type-opt">
+            <input type="radio" name="type" id="type-text" value="text" checked onchange="onTypeChange()">
+            <span class="type-card"><span class="type-icon">📝</span><span>Text</span></span>
+          </label>
+          <label class="type-opt">
+            <input type="radio" name="type" id="type-image" value="image" onchange="onTypeChange()">
+            <span class="type-card"><span class="type-icon">🖼️</span><span>Image</span></span>
+          </label>
+          <label class="type-opt">
+            <input type="radio" name="type" id="type-video" value="video" onchange="onTypeChange()">
+            <span class="type-card"><span class="type-icon">🎥</span><span>Video</span></span>
+          </label>
+        </div>
+      </div>
+      <div class="input-group full">
+        <label>Title</label>
+        <input type="text" id="title" placeholder="Slide headline…">
+      </div>
+      <div class="input-group full" id="content-group">
+        <label>Body Text</label>
+        <textarea id="content" placeholder="Main message content…"></textarea>
+      </div>
+      <!-- IMAGE UPLOAD -->
+      <div class="input-group full" id="image-group" style="display:none">
+        <label>Image</label>
+        <div class="drop-zone" id="image-drop-zone">
+          <input type="file" id="image-file-input" accept="image/*" style="display:none">
+          <div class="drop-zone-inner" id="image-drop-inner">
+            <div class="drop-icon">🖼️</div>
+            <div class="drop-title">Click to upload or drag &amp; drop</div>
+            <div class="drop-hint">PNG, JPG, GIF, WebP · max 10 MB</div>
+          </div>
+          <img id="image-preview" class="drop-preview" style="display:none" alt="preview">
+          <button class="drop-clear-btn" id="image-clear-btn" style="display:none" type="button">✕ Remove</button>
+        </div>
+        <div class="drop-divider"><span>or paste a URL</span></div>
+        <input type="url" id="image-url-input" placeholder="https://example.com/photo.jpg">
+        <div class="upload-progress" id="image-progress" style="display:none">
+          <div class="upload-bar-track"><div class="upload-bar-fill" id="image-progress-bar"></div></div>
+          <span class="upload-progress-label" id="image-progress-label">Uploading…</span>
+        </div>
+      </div>
+      <!-- VIDEO UPLOAD -->
+      <div class="input-group full" id="video-group" style="display:none">
+        <label>Video</label>
+        <div class="drop-zone" id="video-drop-zone">
+          <input type="file" id="video-file-input" accept="video/*" style="display:none">
+          <div class="drop-zone-inner" id="video-drop-inner">
+            <div class="drop-icon">🎥</div>
+            <div class="drop-title">Click to upload or drag &amp; drop</div>
+            <div class="drop-hint">MP4, WebM, MOV · max 100 MB</div>
+          </div>
+          <video id="video-preview" class="drop-preview" style="display:none" muted playsinline controls></video>
+          <button class="drop-clear-btn" id="video-clear-btn" style="display:none" type="button">✕ Remove</button>
+        </div>
+        <div class="drop-divider"><span>or paste a URL</span></div>
+        <input type="url" id="video-url-input" placeholder="https://example.com/clip.mp4">
+        <div class="upload-progress" id="video-progress" style="display:none">
+          <div class="upload-bar-track"><div class="upload-bar-fill" id="video-progress-bar"></div></div>
+          <span class="upload-progress-label" id="video-progress-label">Uploading…</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Category</label>
+        <input type="text" id="category" placeholder="Announcement">
+      </div>
+      <div class="input-group">
+        <label>Duration (ms)</label>
+        <input type="number" id="duration" placeholder="7000" min="1000" step="500">
+      </div>
+      <div class="input-group" id="bgcolor-group">
+        <label>Accent Color</label>
+        <select id="bgtheme">
+          <option value="blue">🔵 Ocean Blue</option>
+          <option value="purple">🟣 Soft Purple</option>
+          <option value="green">🟢 Fresh Green</option>
+          <option value="amber">🟡 Warm Amber</option>
+          <option value="rose">🔴 Rose Pink</option>
+          <option value="teal">🩵 Teal</option>
+        </select>
+      </div>
+      <div class="input-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="fullscreen">
+          <span class="checkbox-custom"></span>
+          Fullscreen media
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" id="save-btn" onclick="savePost()">
+        <span id="save-btn-text">Save Slide</span>
+      </button>
+      <button class="btn-ghost" onclick="clearForm()">Clear</button>
+    </div>
+  </div>
+  <div class="posts-panel">
+    <div class="section-title">All Slides <span class="count-badge" id="post-count">0</span></div>
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterSlides('all',this)">All</button>
+      <button class="filter-btn" onclick="filterSlides('text',this)">📝 Text</button>
+      <button class="filter-btn" onclick="filterSlides('image',this)">🖼️ Image</button>
+      <button class="filter-btn" onclick="filterSlides('video',this)">🎥 Video</button>
+    </div>
+    <div class="posts-list" id="posts"><div class="loading-state">Loading slides…</div></div>
+  </div>
+</div>
+<script type="module" src="admin.js"></script>
+</body>
+</html>
