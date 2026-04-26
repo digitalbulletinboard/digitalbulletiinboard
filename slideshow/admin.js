@@ -5,8 +5,8 @@ import { ref, push, onValue, remove, update, get }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── CLOUDINARY CONFIG ─────────────────────────────────────────────────────────
-const CLOUDINARY_CLOUD_NAME    = "YOUR_CLOUD_NAME";
-const CLOUDINARY_UPLOAD_PRESET = "YOUR_UPLOAD_PRESET";
+const CLOUDINARY_CLOUD_NAME    = "dmzmkkhao";
+const CLOUDINARY_UPLOAD_PRESET = "lckingcg";
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const postsRef       = ref(db, "posts");
