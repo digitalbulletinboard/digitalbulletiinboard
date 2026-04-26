@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bulletin Board Display</title>
-  <link rel="shortcut icon" href="logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
   <style>
@@ -27,7 +26,7 @@
       top: 0; left: 0; right: 0;
       bottom: var(--bar);
       height: calc(100vh - var(--bar));  /* explicit height so arrow top:50% works */
-      z-index: 10;                        /* above pbar(50)? No — arrows need z above bar */
+      z-index: 10;
     }
 
     /* ─── SLIDES (clipped container separate from arrows) ─── */
@@ -113,10 +112,11 @@
     .arrow {
       position: absolute;
       top: 50%; transform: translateY(-50%);
-      z-index: 200;                        /* above bar(60), pbar(50), slides(2) */
+      z-index: 80;                         /* above bar(60), pbar(50), slides(2) */
       width: 54px; height: 54px;
       background: rgba(255,255,255,0.18);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1.5px solid rgba(255,255,255,0.38);
       border-radius: 50%;
       color: #fff; font-size: 22px;
@@ -135,8 +135,8 @@
     /* ─── DOTS ─── */
     #dots {
       position: absolute;
-      bottom: 14px; left: 50%; transform: translateX(-50%);
-      z-index: 150;
+      bottom: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 80;
       display: flex; gap: 7px;
       pointer-events: none;
     }
@@ -359,18 +359,29 @@ onValue(ref(db, 'posts'), snap => {
 
   rebuild();
 
+  /* Always hide the loader once Firebase responds (even if 0 posts) */
   if (!loaded) {
     loaded = true;
     idx = 0;
-    go(0);
-    /* fade out loader */
-    const ls = document.getElementById('ls');
-    if (ls) { ls.classList.add('gone'); setTimeout(() => ls.remove(), 600); }
+    /* Use rAF so the DOM is painted before we start transitions */
+    requestAnimationFrame(() => {
+      go(0);
+      const ls = document.getElementById('ls');
+      if (ls) { ls.classList.add('gone'); setTimeout(() => ls.remove(), 600); }
+    });
   } else {
     /* live update — stay on same slide key */
     const ni = posts.findIndex(p => p._key === prevKey);
     idx = ni >= 0 ? ni : 0;
     go(idx); /* restart timer from current slide after rebuild */
+  }
+}, err => {
+  /* Firebase read error — show it and hide loader so user isn't stuck */
+  console.error('Firebase read error:', err);
+  const ls = document.getElementById('ls');
+  if (ls) {
+    ls.querySelector('p').textContent = '⚠️ Database connection error. Check Firebase rules.';
+    ls.querySelector('.icon').textContent = '❌';
   }
 });
 
@@ -431,9 +442,10 @@ function mkSlide(p, i) {
     const w = mk('div','vid-wrap');
     const v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.preload = 'auto';
-    const src = document.createElement('source');
-    src.src = p.mediaUrl || ''; src.type = 'video/mp4';
-    v.appendChild(src); w.appendChild(v); s.appendChild(w);
+    /* Don't hardcode video/mp4 — let the browser sniff the type.
+       Setting src directly (not via <source>) also gives better error events. */
+    v.src = p.mediaUrl || '';
+    w.appendChild(v); s.appendChild(w);
   }
 
   return s;
@@ -461,10 +473,8 @@ function go(i) {
     ddots[si]?.classList.remove('on');
     const v = s.querySelector('video');
     if (v) {
-      v.pause();
+      try { v.pause(); } catch(_) {}
       v.currentTime = 0;
-      v.onended = null;
-      /* remove any pending loadedmetadata listeners by cloning */
     }
   });
 
@@ -487,22 +497,28 @@ function go(i) {
     /* Reset progress bar */
     pbar.style.transition = 'none';
     pbar.style.width = '0%';
-    vid.onended = () => go(idx + 1);
+
+    /* Remove any previously attached listeners by replacing with a fresh clone */
+    const fresh = vid.cloneNode(true);
+    vid.parentNode.replaceChild(fresh, vid);
+
+    fresh.onended = () => go(idx + 1);
+    fresh.onerror = () => { console.warn('Video error, advancing'); go(idx + 1); };
 
     const startVideo = () => {
-      vid.play().catch(() => {});
-      const dur = (isFinite(vid.duration) && vid.duration > 0) ? vid.duration : 10;
+      fresh.play().catch(() => { go(idx + 1); }); /* advance if autoplay blocked */
+      const dur = (isFinite(fresh.duration) && fresh.duration > 0) ? fresh.duration : 10;
       bar2(dur * 1000);
       /* fallback timer in case video never fires ended */
       tmr = setTimeout(() => go(idx + 1), dur * 1000 + 500);
     };
 
-    if (vid.readyState >= 1) {
+    if (fresh.readyState >= 1) {
       startVideo();
     } else {
-      vid.addEventListener('loadedmetadata', startVideo, { once: true });
-      /* if metadata never loads within 3s, advance anyway */
-      tmr = setTimeout(() => { vid.removeEventListener('loadedmetadata', startVideo); go(idx + 1); }, 10000);
+      fresh.addEventListener('loadedmetadata', startVideo, { once: true });
+      /* if metadata never loads within 10s, advance anyway */
+      tmr = setTimeout(() => { fresh.removeEventListener('loadedmetadata', startVideo); go(idx + 1); }, 10000);
     }
     return;
   }
@@ -541,8 +557,12 @@ document.addEventListener('keydown', e => {
   if (e.key === ' ') { e.preventDefault(); go(idx + 1); }
 });
 
-/* ── Click anywhere on slide area to advance ────────────────────────────── */
+/* ── Click anywhere on slide area to advance (skip video slides) ────────── */
 document.getElementById('slides-clip').addEventListener('click', e => {
+  /* Don't advance if user clicked a button inside the slide area */
+  if (e.target.closest('button, a')) return;
+  /* Don't advance on video slides — user may be trying to interact */
+  if (posts[idx]?.type === 'video') return;
   go(idx + 1);
 });
 
